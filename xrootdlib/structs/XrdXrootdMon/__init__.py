@@ -3,6 +3,7 @@ from typing import List, Union, Dict
 
 from .map_stream import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, MapPayload
 from .redir_stream import XROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
+from .fstat_stream import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
 from ...utility import ValueCacheDict as _ValueCacheDict
 
 
@@ -102,7 +103,41 @@ class Burr(object):
                 records.append(record)
                 record_view = record_view[record.size:]
         if not isinstance(records[0], SrvInfo):
-            raise ValueError('record data must start with an `SrvInfo`')
+            raise ValueError('record data must start with a `SrvInfo`')
+        return cls(records[0], records[1:])
+
+
+class Fstat(object):
+    __slots__ = ('tod', 'records')
+    payload_dispath = {
+        recType.isDisc: FileDSC,
+        recType.isOpen: FileOPN,
+        recType.isTime: FileTOD,
+        recType.isClose: FileCLS,
+        recType.isXFR: FileXFR,
+    }
+
+    def __init__(self, tod: FileTOD, records: List[FileRecord]):
+        self.tod, self.records = tod, records
+
+    @classmethod
+    def from_record(cls, record_data: bytes, record_code: bytes = b'r'):
+        if record_code != b'f':
+            raise ValueError('unknown record code %r' % record_code)
+        records = []
+        record_view = memoryview(record_data)
+        while record_view:
+            redir_type = record_view[0]
+            try:
+                payload_type = cls.payload_dispath[redir_type]  # type: FileRecord
+            except KeyError:
+                raise ValueError('unknown redir type %r' % redir_type)
+            else:
+                record = payload_type.from_buffer(record_view)
+                records.append(record)
+                record_view = record_view[record.size:]
+        if not isinstance(records[0], FileTOD):
+            raise ValueError('record data must start with a `FileTOD`')
         return cls(records[0], records[1:])
 
 
@@ -120,6 +155,7 @@ class Packet(object):
     record_dispath = {key: Map for key in Map.payload_dispath.keys()}  # type: Dict[bytes, PacketRecord]
     record_dispath[b'r'] = Burr
     record_dispath[b't'] = Buff
+    record_dispath[b'f'] = Fstat
 
     def __init__(self, header: Header, record: PacketRecord):
         self.header, self.record, self.size = header, record, header.plen

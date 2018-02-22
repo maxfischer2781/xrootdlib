@@ -53,3 +53,15 @@ class ValueCacheDict(weakref.WeakValueDictionary):
     def __setitem__(self, key, value):
         self._lifetime.append(value)
         super().__setitem__(key, value)
+
+
+def verbose_repr(self):
+    return '{slf.__class__.__name__}({attrs})'.format(
+        slf=self, attrs=', '.join((attr + '=' + repr(getattr(self, attr))) for attr in self.__slots__)
+    )
+
+
+def field_repr(self):
+    return '{slf.__class__.__name__}({attrs})'.format(
+        slf=self, attrs=', '.join(repr(getattr(self, attr)) for attr in self.__slots__)
+    )
