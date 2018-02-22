@@ -167,7 +167,7 @@ class StatSSQ(object):
 class FileCLS(object):
     """``XrdXrootdMonFileCLS`` indicating that a client closed a file"""
     __slots__ = ('flags', 'dictid', 'read', 'readv', 'write', 'ops', 'ssq')
-    struct_parser = struct.Struct('!B B h l q q q')
+    struct_parser = struct.Struct('!B B h L q q q')
 
     @property
     def xfr(self):
@@ -208,7 +208,7 @@ class FileCLS(object):
 class FileXFR(object):
     """``XrdXrootdMonFileCLS`` indicating that a client closed a file"""
     __slots__ = ('flags', 'dictid', 'read', 'readv', 'write')
-    struct_parser = struct.Struct('!B B h l q q q')
+    struct_parser = struct.Struct('!B B h L q q q')
     size = struct_parser.size
 
     @property

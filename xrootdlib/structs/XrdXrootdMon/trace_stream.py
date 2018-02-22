@@ -46,7 +46,7 @@ class AppId(object):
 
 class Close(object):
     __slots__ = ('rtot', 'wtot', 'dictid')
-    struct_parser = struct.Struct('!B B B x I I I')
+    struct_parser = struct.Struct('!B B B x I I L')
     size = TRACE_SIZE
 
     def __init__(self, rtot: int, wtot: int, dictid: int):
@@ -61,7 +61,7 @@ class Close(object):
 
 class Disc(object):
     __slots__ = ('flags', 'buflen', 'dictid')
-    struct_parser = struct.Struct('!B B 6x i I')
+    struct_parser = struct.Struct('!B B 6x i L')
     size = TRACE_SIZE
 
     def __init__(self, flags: int, buflen: int, dictid: int):
@@ -75,7 +75,7 @@ class Disc(object):
 
 class Open(object):
     __slots__ = ('filesize', 'dictid')
-    struct_parser = struct.Struct('!B 7s 4x I')
+    struct_parser = struct.Struct('!B 7s 4x L')
     size = TRACE_SIZE
 
     def __init__(self, filesize: int, dictid: int):
@@ -90,7 +90,7 @@ class Open(object):
 
 class ReadWrite(object):
     __slots__ = ('val', 'buflen', 'dictid')
-    struct_parser = struct.Struct('!q i I')
+    struct_parser = struct.Struct('!q i L')
 
     @property
     def readlen(self):
@@ -111,7 +111,7 @@ class ReadWrite(object):
 
 class Read(object):
     __slots__ = ('readid', 'count', 'buflen', 'dictid')
-    struct_parser = struct.Struct('!B B H 4x i I')
+    struct_parser = struct.Struct('!B B H 4x i L')
     size = TRACE_SIZE
 
     def __init__(self, readid: int, count: int, buflen: int, dictid: int):

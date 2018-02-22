@@ -49,7 +49,7 @@ class XROOTD_MON(int, enum.Enum):
 class Redirect(object):
     """``XrdXrootdMonRedir`` representing a redirect record"""
     __slots__ = ('type', 'subtype', 'dent', 'port', 'dictid', 'server', 'path')
-    struct_parser = struct.Struct('!B B h l')
+    struct_parser = struct.Struct('!B B h L')
 
     @property
     def size(self) -> int:
