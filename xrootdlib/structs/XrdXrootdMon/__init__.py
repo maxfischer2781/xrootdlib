@@ -178,7 +178,10 @@ class Packet(object):
 
 
 if __name__ == '__main__':
-    import sys, time
+    import sys
+    import time
+    if len(sys.argv) != 2:
+        raise SystemExit("test with 'python3 -m %s <monitor dump file>'" % __package__)
     packet_path = sys.argv[1]
     with open(packet_path, 'rb') as packet_stream:
         packet_buffer = memoryview(packet_stream.read())
