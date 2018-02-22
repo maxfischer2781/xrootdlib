@@ -50,7 +50,7 @@ class Map(object):
         try:
             struct_parser = parser_cache[message_length]
         except KeyError:
-            struct_parser = parser_cache[message_length] = struct.Struct('!l%ds' % (message_length - 8 - 4))
+            struct_parser = parser_cache[message_length] = struct.Struct('!L%ds' % (message_length - 8 - 4))
         dictid, payload = struct_parser.unpack_from(record_data)  # type: int, bytes
         userid, _, map_info = payload.partition(b'\n')
         userid = UserId.from_buffer(userid)
