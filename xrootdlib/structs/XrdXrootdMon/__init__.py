@@ -2,8 +2,9 @@ import struct
 from typing import List, Union, Dict
 
 from .map_stream import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, MapPayload
-from .redir_stream import XROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
+from .redir_stream import XROOTD_MON as RXROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
 from .fstat_stream import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
+from .trace_stream import XROOTD_MON as TXROOTD_MON, AppId, Close, Disc, Open, ReadWrite, ReadU, ReadV, Window, Trace
 from ...utility import ValueCacheDict as _ValueCacheDict
 
 
@@ -67,10 +68,10 @@ class Burr(object):
     """``XrdXrootdMonBurr`` describing redirection events"""
     __slots__ = ('sid', 'records')
     payload_dispath = {
-        XROOTD_MON.REDIRECT: Redirect,
-        XROOTD_MON.REDLOCAL: Redirect,
-        XROOTD_MON.REDTIME: WindowMark,
-        XROOTD_MON.REDSID: ServerIdent,
+        RXROOTD_MON.REDIRECT: Redirect,
+        RXROOTD_MON.REDLOCAL: Redirect,
+        RXROOTD_MON.REDTIME: WindowMark,
+        RXROOTD_MON.REDSID: ServerIdent,
     }
 
     @property
@@ -142,9 +143,42 @@ class Fstat(object):
 
 
 class Buff(object):
+    """``XrdXrootdMonBuff`` describing trace events"""
+    __slots__ = ('records',)
+    payload_dispath = {
+        TXROOTD_MON.APPID: AppId,
+        TXROOTD_MON.CLOSE: Close,
+        TXROOTD_MON.DISC: Disc,
+        TXROOTD_MON.OPEN: Open,
+        TXROOTD_MON.READU: ReadU,
+        TXROOTD_MON.READV: ReadV,
+        TXROOTD_MON.WINDOW: Window,
+        # no valid flag for ReadWrite
+    }
+
+    def __init__(self, records: List[Trace]):
+        self.records = records
+
     @classmethod
-    def from_record(cls, record_data: bytes, record_code: bytes = b'r'):
-        return cls()
+    def from_record(cls, record_data: bytes, record_code: bytes = b't'):
+        if record_code != b't':
+            raise ValueError('unknown record code %r' % record_code)
+        records = []
+        record_view = memoryview(record_data)
+        while record_view:
+            redir_type = record_view[0] & 0xf0
+            try:
+                if redir_type >> 7:  # high order bit is set for all but ReadWrite
+                    payload_type = cls.payload_dispath[redir_type]  # type: Trace
+                else:
+                    payload_type = ReadWrite
+            except KeyError:
+                raise ValueError('unknown redir type %r' % redir_type)
+            else:
+                record = payload_type.from_buffer(record_view)
+                records.append(record)
+                record_view = record_view[record.size:]
+        return cls(records)
 
 
 PacketRecord = Union[Map, Burr, Buff]
