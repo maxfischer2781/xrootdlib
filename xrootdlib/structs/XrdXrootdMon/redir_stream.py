@@ -6,6 +6,7 @@ from .constants import XROOTD_MON_SIDMASK
 
 
 class XROOTD_MON(int, enum.Enum):
+    """``XROOTD_MON_XYZ`` constants for the r-stream"""
     # information types
     #: Window timing mark
     REDTIME = 0x00
@@ -47,7 +48,17 @@ class XROOTD_MON(int, enum.Enum):
 
 
 class Redirect(object):
-    """``XrdXrootdMonRedir`` representing a redirect record"""
+    """
+    ``XrdXrootdMonRedir`` representing a redirect record
+
+    :param type: the type of the record, i.e. ``REDIRECT`` or ```REDLOCAL``
+    :param subtype: the requested operation, i.e. ``CHMOD``, ``LOCALTE``, ...
+    :param dent: size of the struct in bytes plus one
+    :param port: port to which the client was redirected
+    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Fstat`)
+    :param server: hostname or address of the target server
+    :param path: path of the file on the target server
+    """
     __slots__ = ('type', 'subtype', 'dent', 'port', 'dictid', 'server', 'path')
     struct_parser = struct.Struct('!B B h L')
 
@@ -57,7 +68,8 @@ class Redirect(object):
 
     @property
     def local(self) -> bool:
-        return bool(self.server)
+        """Whether the redirection target is the same server"""
+        return not self.server
 
     @property
     def arg0(self):
@@ -124,7 +136,11 @@ class RedirectArg1View(object):
 
 
 class ServerIdent(object):
-    """``XrdXrootdMonRedir`` representing a server identification record"""
+    """
+    ``XrdXrootdMonRedir`` representing a server identification record
+
+    :param sid: server identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Fstat`)
+    """
     __slots__ = ('sid',)
     struct_parser = struct.Struct('!q')
     size = struct_parser.size
@@ -140,8 +156,28 @@ class ServerIdent(object):
 
 
 class WindowMark(object):
-    """``XrdXrootdMonRedir`` representing a window timing mark"""
-    __slots__ = ('timestamp', 'window')
+    """
+    ``XrdXrootdMonRedir`` representing a window timing mark
+
+    :param timestamp: timestamp when the *current* window started
+    :param prev_duration: duration of the *previous* window
+
+    Note that windows are usually not adjacent: the :py:class:`WindowMark`
+    signifies the beginning of a *new* window.
+    The previous window may have been closed an arbitrary time before.
+
+    To get the time range covered by a window, the ``prev_duration``
+    of the next window is required:
+
+    .. code:: python
+
+        # window => tuple(start, end)
+        window_range[i] = (
+            window_marks[i].timestamp,
+            window_marks[i].timestamp + window_marks[i+1].prev_duration
+        )
+    """
+    __slots__ = ('timestamp', 'prev_duration')
     struct_parser = struct.Struct('!l l')
     size = struct_parser.size
     type = XROOTD_MON.REDTIME
@@ -155,7 +191,7 @@ class WindowMark(object):
         return WindowMarkArg1View(self)
 
     def __init__(self, timestamp: int, window: int):
-        self.timestamp, self.window = timestamp, window
+        self.timestamp, self.prev_duration = timestamp, window
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
@@ -172,7 +208,7 @@ class WindowMarkArg0View(object):
 
     @property
     def window(self):
-        return self._window.window
+        return self._window.prev_duration
 
     def __init__(self, window: WindowMark):
         self._window = window
@@ -189,4 +225,5 @@ class WindowMarkArg1View(object):
         self._window = window
 
 
+#: Type of records in the r stream
 Redir = Union[Redirect, ServerIdent, WindowMark]
