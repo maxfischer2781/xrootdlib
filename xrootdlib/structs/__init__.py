@@ -1,0 +1,3 @@
+"""
+Representation of XRootD structs
+"""
