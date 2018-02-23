@@ -9,7 +9,14 @@ from ...utility import ValueCacheDict as _ValueCacheDict
 
 
 class Header(object):
-    """``XrdXrootdMonHeader`` shared by all messages"""
+    """
+    ``XrdXrootdMonHeader`` shared by all packets
+
+    :param code: identifier for the record type
+    :param pseq: wrapping counter for packet sequence
+    :param plen: size of the packet in bytes
+    :param stod: daemon start timestamp
+    """
     __slots__ = ('code', 'pseq', 'plen', 'stod')
     struct_parser = struct.Struct('!c B h l')
     size = struct_parser.size
@@ -25,7 +32,19 @@ class Header(object):
 
 
 class Map(object):
-    """``XrdXrootdMonMap`` describing transactions and general information"""
+    """
+    ``XrdXrootdMonMap`` describing transactions and general information
+
+    :param dictid: identifier shared by all records referring to the same information
+    :param userid: identifier for the client session being monitored
+    :param payload: the actual information of this message
+
+    The :py:class:`~.Map` provides general information that applies across several monitoring events.
+    Events of other streams reference this with the ``dictid``,
+    or the ``sid`` of the :py:class:`~.UserId` of :py:class:`~.SrvInfo` payloads.
+    Note that in case of :py:class:`~.SrvInfo` payloads,
+    the ``userid`` contains the *server* user data.
+    """
     __slots__ = ('dictid', 'userid', 'payload')
     _parser_cache = _ValueCacheDict(1024)
     payload_dispath = {
@@ -65,7 +84,17 @@ class Map(object):
 
 
 class Burr(object):
-    """``XrdXrootdMonBurr`` describing redirection events"""
+    """
+    ``XrdXrootdMonBurr`` describing redirection events
+
+    :param sid: identification of the server sending events
+    :param records: individual operations requested by clients
+
+    The ``records`` field contains operation redirection records (:py:class:`Redirect`)
+    framed by window marks (:py:class:`~.WindowMark`).
+    In other words, ``records`` contains one *or more* sequences of records,
+    with marks at the start, end and between sequences.
+    """
     __slots__ = ('sid', 'records')
     payload_dispath = {
         RXROOTD_MON.REDIRECT: Redirect,
@@ -103,12 +132,18 @@ class Burr(object):
                 record = payload_type.from_buffer(record_view)
                 records.append(record)
                 record_view = record_view[record.size:]
-        if not isinstance(records[0], SrvInfo):
-            raise ValueError('record data must start with a `SrvInfo`')
+        if not isinstance(records[0], ServerIdent):
+            raise ValueError('record data must start with a `ServerIdent`')
         return cls(records[0], records[1:])
 
 
 class Fstat(object):
+    """
+    virtual ``XrdXrootdMonFstat`` describing the general file access
+
+    :param tod: identifier for the server and time window
+    :param records: file operations and statistics
+    """
     __slots__ = ('tod', 'records')
     payload_dispath = {
         recType.isDisc: FileDSC,
@@ -143,7 +178,11 @@ class Fstat(object):
 
 
 class Buff(object):
-    """``XrdXrootdMonBuff`` describing trace events"""
+    """
+    ``XrdXrootdMonBuff`` describing trace events
+
+    :param records: individual file operation events
+    """
     __slots__ = ('records',)
     payload_dispath = {
         TXROOTD_MON.APPID: AppId,
