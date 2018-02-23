@@ -153,6 +153,14 @@ class Fstat(object):
         recType.isXFR: FileXFR,
     }
 
+    @property
+    def start(self) -> int:
+        return self.tod.start
+
+    @property
+    def end(self) -> int:
+        return self.tod.end
+
     def __init__(self, tod: FileTOD, records: List[FileRecord]):
         self.tod, self.records = tod, records
 
