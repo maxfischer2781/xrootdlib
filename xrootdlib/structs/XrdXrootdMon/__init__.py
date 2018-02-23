@@ -232,14 +232,24 @@ PacketRecord = Union[Map, Burr, Buff]
 
 
 class Packet(object):
-    __slots__ = ('header', 'record', 'size')
+    """
+    ``XrdXrootdMon`` packet for a map, r, t or f stream
+
+    :param header: the header specifying type, ordering and size of the packet
+    :param record: the actual information carried by the packet
+    """
+    __slots__ = ('header', 'record')
     record_dispath = {key: Map for key in Map.payload_dispath.keys()}  # type: Dict[bytes, PacketRecord]
     record_dispath[b'r'] = Burr
     record_dispath[b't'] = Buff
     record_dispath[b'f'] = Fstat
 
+    @property
+    def size(self):
+        return self.header.plen
+
     def __init__(self, header: Header, record: PacketRecord):
-        self.header, self.record, self.size = header, record, header.plen
+        self.header, self.record = header, record
 
     def __str__(self):
         return '<{slf.__class__.__name__}@{address}>'.format(
