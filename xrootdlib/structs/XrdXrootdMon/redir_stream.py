@@ -55,7 +55,7 @@ class Redirect(object):
     :param subtype: the requested operation, i.e. ``CHMOD``, ``LOCALTE``, ...
     :param dent: size of the struct in bytes plus one
     :param port: port to which the client was redirected
-    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Fstat`)
+    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
     :param server: hostname or address of the target server
     :param path: path of the file on the target server
     """
@@ -139,7 +139,7 @@ class ServerIdent(object):
     """
     ``XrdXrootdMonRedir`` representing a server identification record
 
-    :param sid: server identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Fstat`)
+    :param sid: server identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
     """
     __slots__ = ('sid',)
     struct_parser = struct.Struct('!q')
