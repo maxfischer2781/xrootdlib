@@ -1,10 +1,10 @@
 import struct
 from typing import List, Union, Dict
 
-from .map_stream import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, MapPayload
-from .redir_stream import XROOTD_MON as RXROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
-from .fstat_stream import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
-from .trace_stream import XROOTD_MON as TXROOTD_MON, AppId, Close, Disc, Open, ReadWrite, ReadU, ReadV, Window, Trace
+from .map import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, MapPayload
+from .redir import XROOTD_MON as RXROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
+from .fstat import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
+from .trace import XROOTD_MON as TXROOTD_MON, AppId, Close, Disc, Open, ReadWrite, ReadU, ReadV, Window, Trace
 from ...utility import ValueCacheDict as _ValueCacheDict
 
 
