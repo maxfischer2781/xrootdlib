@@ -7,6 +7,7 @@ from ...utility import verbose_repr
 
 
 class recType(int, enum.Enum):
+    """Record type identifiers for the f stream"""
     #: XrdXrootdMonFileCLS
     isClose = 0
     #: XrdXrootdMonFileDSC
@@ -20,6 +21,7 @@ class recType(int, enum.Enum):
 
 
 class recFval(int, enum.Enum):
+    """Record flags for the f stream"""
     #: The sID member is present
     hasSID = 0x01
     #: XrdXroodMonFileLFN present
@@ -35,6 +37,16 @@ class recFval(int, enum.Enum):
 
 
 class FileTOD(object):
+    """
+    ``XrdXrootdMonFileTOD`` identifying the sender and time range
+
+    :param flags: indicator for fields present
+    :param records_xfr: number of :py:class:`FileXFR` records in the packet
+    :param records_total: number of :py:class:`FileRecord` records in the packet
+    :param start: timestamp of the first record
+    :param end: timestamp the packet was sent
+    :param sid: server identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    """
     __slots__ = ('flags', 'records_xfr', 'records_total', 'start', 'end', 'sid')
     struct_parser = struct.Struct('!B B h h h l l q')
     size = struct_parser.size
@@ -54,7 +66,12 @@ class FileTOD(object):
 
 
 class FileDSC(object):
-    """``XrdXrootdMonFileDSC`` indicating that a client disconnected from the server"""
+    """
+    ``XrdXrootdMonFileDSC`` indicating that a client disconnected from the server
+
+    :param flags: unused for this record type
+    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    """
     __slots__ = ('flags', 'dictid')
     struct_parser = struct.Struct('!B B h L')
     size = struct_parser.size
@@ -73,8 +90,17 @@ class FileDSC(object):
 
 
 class FileOPN(object):
-    """``XrdXrootdMonFileOPN`` indicating that a client opened a file"""
-    __slots__ = ('flags', 'size','fileid', 'fsz', 'user', 'lfn')
+    """
+    ``XrdXrootdMonFileOPN`` indicating that a client opened a file
+
+    :param flags: indicator for fields present and access type
+    :param size: size of the struct in bytes
+    :param fileid: file identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    :param filesize: size of the file in bytes
+    :param user: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    :param lfn: the (logical) path of the file
+    """
+    __slots__ = ('flags', 'size', 'fileid', 'filesize', 'user', 'lfn')
     struct_parser = struct.Struct('!B B h L q')
 
     @property
@@ -83,12 +109,17 @@ class FileOPN(object):
             return FileLFNView(self)
         return None
 
-    def __init__(self, flags: int, size: int, fileid: int, fsz: int, user: Optional[int] = None, lfn: Optional[bytes] = None):
-        self.flags, self.size, self.fileid, self.fsz, self.user, self.lfn = flags, size, fileid, fsz, user, lfn
+    @property
+    def fsz(self):
+        return self.filesize
+
+    def __init__(self, flags: int, size: int, fileid: int, filesize: int, user: Optional[int] = None, lfn: Optional[bytes] = None):
+        self.flags, self.size, self.fileid, self.filesize, self.user, self.lfn = \
+            flags, size, fileid, filesize, user, lfn
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
-        rec_type, rec_flag, rec_size, fileid, fsz = cls.struct_parser.unpack_from(buffer) \
+        rec_type, rec_flag, rec_size, fileid, filesize = cls.struct_parser.unpack_from(buffer) \
             # type: int, int, int, int, int
         static_size = cls.struct_parser.size
         if rec_size != static_size:
@@ -96,7 +127,7 @@ class FileOPN(object):
             lfn = bytes(buffer[static_size+4:rec_size-static_size]).partition(b'\00')[0]
         else:
             user, lfn = None, None
-        return cls(rec_flag, rec_size, fileid, fsz, user, lfn)
+        return cls(rec_flag, rec_size, fileid, filesize, user, lfn)
 
     __repr__ = verbose_repr
 
@@ -117,6 +148,7 @@ class FileLFNView(object):
 
 
 class StatOPS(object):
+    """``XrdXrootdMonStatOPS`` describing file operation statistics"""
     __slots__ = (
         'read', 'readv', 'write',
         'rsmin', 'rsmax', 'rsegs',
@@ -150,6 +182,7 @@ class StatOPS(object):
 
 
 class StatSSQ(object):
+    """``XrdXrootdMonStatSSQ`` describing file operation statistic deviations"""
     __slots__ = ('read', 'readv', 'rsegs', 'write')
     struct_parser = struct.Struct('!4q')
     size = struct_parser.size
@@ -165,7 +198,17 @@ class StatSSQ(object):
 
 
 class FileCLS(object):
-    """``XrdXrootdMonFileCLS`` indicating that a client closed a file"""
+    """
+    ``XrdXrootdMonFileCLS`` indicating that a client closed a file
+
+    :param flags: indicator for fields present and close type
+    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    :param read: bytes read using ``read()``
+    :param readv: bytes read using ``readv()``
+    :param write: bytes written
+    :param ops: file operation statistics
+    :param ssq: file operation statistic deviations
+    """
     __slots__ = ('flags', 'dictid', 'read', 'readv', 'write', 'ops', 'ssq')
     struct_parser = struct.Struct('!B B h L q q q')
 
@@ -206,7 +249,15 @@ class FileCLS(object):
 
 
 class FileXFR(object):
-    """``XrdXrootdMonFileCLS`` indicating that a client closed a file"""
+    """
+    ``XrdXrootdMonFileXFR`` indicating file transfer statistics
+
+    :param flags: unused
+    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    :param read: bytes read using ``read()``
+    :param readv: bytes read using ``readv()``
+    :param write: bytes written
+    """
     __slots__ = ('flags', 'dictid', 'read', 'readv', 'write')
     struct_parser = struct.Struct('!B B h L q q q')
     size = struct_parser.size
@@ -245,4 +296,5 @@ class StatXFRView(object):
         self._file_struct = file_struct
 
 
+#: Type of records in the f stream
 FileRecord = Union[FileTOD, FileDSC, FileOPN, FileCLS, FileXFR]
