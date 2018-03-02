@@ -136,43 +136,48 @@ class XfrInfo(object):
 
 class AuthInfo(object):
     """``*/authinfo`` describing an authenticating user"""
-    __slots__ = ('p', 'n', 'h', 'o', 'r', 'g', 'm', 'x', 'y')
+    __slots__ = ('protocol', 'name', 'host', 'organisation', 'role', 'group', 'm', 'executable', 'moninfo')
 
     @property
-    def protocol(self):
-        return self.p
+    def p(self):
+        return self.protocol
 
     @property
-    def name(self):
-        return self.n
+    def n(self):
+        return self.name
 
     @property
-    def host(self):
-        return self.h
+    def h(self):
+        return self.host
 
     @property
-    def organisation(self):
-        return self.o
+    def o(self):
+        return self.organisation
 
     @property
-    def role(self):
-        return self.r
+    def r(self):
+        return self.role
 
     @property
-    def group(self):
-        return self.g
+    def g(self):
+        return self.group
 
     @property
-    def executable(self):
-        return self.x
+    def x(self):
+        return self.executable
 
     @property
-    def moninfo(self):
-        return self.y
+    def y(self):
+        return self.moninfo
 
-    def __init__(self, p: bytes, n: bytes, h: bytes, o: bytes, r: bytes, g: bytes, m: bytes, x: bytes, y: bytes):
-        self.p, self.n, self.h, self.o, self.r, self.g, self.m, self.x, self.y = \
-            p, n, h, o, r, g, m, x, y
+    def __init__(
+            self,
+            protocol: bytes, name: bytes, host: bytes, organisation: bytes, role: bytes, group: bytes,
+            m: bytes, executable: bytes, moninfo: bytes
+    ):
+        self.protocol, self.name, self.host, self.organisation, self.role, self.group = \
+            protocol, name, host, organisation, role, group
+        self.m, self.executable, self.moninfo = m, executable, moninfo
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
