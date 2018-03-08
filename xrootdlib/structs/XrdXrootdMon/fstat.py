@@ -202,14 +202,14 @@ class FileCLS(object):
     ``XrdXrootdMonFileCLS`` indicating that a client closed a file
 
     :param flags: indicator for fields present and close type
-    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    :param fileid: file identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
     :param read: bytes read using ``read()``
     :param readv: bytes read using ``readv()``
     :param write: bytes written
     :param ops: file operation statistics
     :param ssq: file operation statistic deviations
     """
-    __slots__ = ('flags', 'dictid', 'read', 'readv', 'write', 'ops', 'ssq')
+    __slots__ = ('flags', 'fileid', 'read', 'readv', 'write', 'ops', 'ssq')
     struct_parser = struct.Struct('!B B h L q q q')
 
     @property
@@ -224,9 +224,9 @@ class FileCLS(object):
             return self.struct_parser.size + StatOPS.size
         return self.struct_parser.size
 
-    def __init__(self, flags: int, dictid: int, read: int, readv: int, write: int, ops: Optional[StatOPS], ssq: Optional[StatSSQ]):
-        self.flags, self.dictid, self.read, self.readv, self.write, self.ops, self.ssq = \
-            flags, dictid, read, readv, write, ops, ssq
+    def __init__(self, flags: int, fileid: int, read: int, readv: int, write: int, ops: Optional[StatOPS], ssq: Optional[StatSSQ]):
+        self.flags, self.fileid, self.read, self.readv, self.write, self.ops, self.ssq = \
+            flags, fileid, read, readv, write, ops, ssq
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
