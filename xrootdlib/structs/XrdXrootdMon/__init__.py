@@ -69,7 +69,7 @@ class Map(object):
         try:
             struct_parser = parser_cache[message_length]
         except KeyError:
-            struct_parser = parser_cache[message_length] = struct.Struct('!L%ds' % (message_length - 8 - 4))
+            struct_parser = parser_cache[message_length] = struct.Struct('!L%ds' % (message_length - 4))
             if len(cls._parser_cache) > 128:
                 print(cls._parser_cache.popitem())
         dictid, payload = struct_parser.unpack_from(record_data)  # type: int, bytes
