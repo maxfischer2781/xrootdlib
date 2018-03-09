@@ -258,7 +258,7 @@ class FileXFR(object):
     :param readv: bytes read using ``readv()``
     :param write: bytes written
     """
-    __slots__ = ('flags', 'dictid', 'read', 'readv', 'write')
+    __slots__ = ('flags', 'fileid', 'read', 'readv', 'write')
     struct_parser = struct.Struct('!B B h L q q q')
     size = struct_parser.size
 
@@ -266,9 +266,9 @@ class FileXFR(object):
     def xfr(self):
         return StatXFRView(self)
 
-    def __init__(self, flags: int, dictid: int, read: int, readv: int, write: int):
-        self.flags, self.dictid, self.read, self.readv, self.write = \
-            flags, dictid, read, readv, write
+    def __init__(self, flags: int, fileid: int, read: int, readv: int, write: int):
+        self.flags, self.fileid, self.read, self.readv, self.write = \
+            flags, fileid, read, readv, write
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
