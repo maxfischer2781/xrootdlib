@@ -28,13 +28,11 @@ def parse_cgi(cgi_data: AnyStr) -> Dict[AnyStr, AnyStr]:
     return data
 
 
-def verbose_repr(self):
-    return '{slf.__class__.__name__}({attrs})'.format(
-        slf=self, attrs=', '.join((attr + '=' + repr(getattr(self, attr))) for attr in self.__slots__)
-    )
-
-
-def field_repr(self):
-    return '{slf.__class__.__name__}({attrs})'.format(
-        slf=self, attrs=', '.join(repr(getattr(self, attr)) for attr in self.__slots__)
+def slot_repr(instance):
+    return '<%s, %s>' % (
+        instance.__class__.__name__,
+        ', '.join(
+            '%s=%r' % (arg, getattr(instance, arg))
+            for arg in instance.__slots__
+        )
     )

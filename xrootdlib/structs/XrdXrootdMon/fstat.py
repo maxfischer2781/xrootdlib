@@ -3,7 +3,7 @@ import enum
 from typing import Optional, Union
 
 from .constants import XROOTD_MON_SIDMASK
-from ...utility import verbose_repr
+from ...utility import slot_repr
 
 
 class recType(int, enum.Enum):
@@ -62,7 +62,7 @@ class FileTOD(object):
         assert rec_size == cls.size, 'FileTOD must be fixed length'
         return cls(rec_flag, recs_xfr, recs_total, t_beg, t_end, sid & XROOTD_MON_SIDMASK)
 
-    __repr__ = verbose_repr
+    __repr__ = slot_repr
 
 
 class FileDSC(object):
@@ -86,7 +86,7 @@ class FileDSC(object):
         assert rec_size == cls.size, 'FileCLS must be fixed length'
         return cls(rec_flag, dictid)
 
-    __repr__ = verbose_repr
+    __repr__ = slot_repr
 
 
 class FileOPN(object):
@@ -129,7 +129,7 @@ class FileOPN(object):
             user, lfn = None, None
         return cls(rec_flag, rec_size, fileid, filesize, user, lfn)
 
-    __repr__ = verbose_repr
+    __repr__ = slot_repr
 
 
 class FileLFNView(object):
@@ -245,7 +245,7 @@ class FileCLS(object):
             ops, ssq = None, None
         return cls(rec_flag, dictid, read, readv, write, ops, ssq)
 
-    __repr__ = verbose_repr
+    __repr__ = slot_repr
 
 
 class FileXFR(object):
@@ -275,6 +275,8 @@ class FileXFR(object):
         rec_type, rec_flag, rec_size, dictid, read, readv, write = cls.struct_parser.unpack_from(buffer) \
             # type: int, int, int, int, int, int, int
         return cls(rec_flag, dictid, read, readv, write)
+
+    __repr__ = slot_repr
 
 
 class StatXFRView(object):
