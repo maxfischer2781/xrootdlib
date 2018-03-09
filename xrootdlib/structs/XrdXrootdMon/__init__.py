@@ -25,7 +25,7 @@ class Header(object):
             code, pseq, plen, stod
 
     @classmethod
-    def from_packet(cls, packet_header: bytes):
+    def from_buffer(cls, packet_header: bytes):
         code, pseq, plen, stod = cls.struct_parser.unpack_from(packet_header)  # type: bytes, int, int, int
         return cls(code, pseq, plen, stod)
 
@@ -258,14 +258,14 @@ class Packet(object):
         )
 
     @classmethod
-    def from_stream(cls, stream: bytes):
-        header = Header.from_packet(stream)
+    def from_buffer(cls, buffer: bytes):
+        header = Header.from_buffer(buffer)
         try:
             record_type = cls.record_dispath[header.code]  # type: PacketRecord
         except KeyError:
             raise ValueError('unknown record code %r' % header.code)
         else:
-            record = record_type.from_record(memoryview(stream)[header.size:header.plen], header.code)
+            record = record_type.from_record(memoryview(buffer)[header.size:header.plen], header.code)
             return cls(header, record)
 
 
@@ -279,9 +279,9 @@ if __name__ == '__main__':
         packet_buffer = memoryview(packet_stream.read())
     stime, packets = time.time(), 0
     while packet_buffer:
-        packet = Packet.from_stream(packet_buffer)
+        packet = Packet.from_buffer(packet_buffer)
         packets += 1
         # print(packet, packet.record)
         packet_buffer = packet_buffer[packet.size:]
     etime = time.time()
-    print('%.1fs' % (etime - stime), '%dHz' % (packets / (etime - stime)))
+    print('%.1fs' % (etime - stime), '%dHz' % (packets / (etime - stime)), '%dp' % packets)
