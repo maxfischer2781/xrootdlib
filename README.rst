@@ -11,7 +11,7 @@ Package Overview
 ``xrootdlib.streams``
     Stream-like converter, reader and representations for various XRootD information sources.
     Each stream produces a pre-processed representation of information,
-    which exposes all relevant information.
+    which directly exposes all relevant information.
 
 ``xrootdlib.structs``
     Representations of various ``struct`` used by XRootD to provide or digest data.
@@ -22,6 +22,12 @@ Package Overview
     ``xrootdlib.structs.XrdXrootdMon``
         Structs used for the *Detailed Monitoring Data Format* streams sent by servers.
         See the ``all.monitor`` directive and `XRootD Monitoring`_ for details.
+
+Compatibility
+-------------
+
+This package requires Python 3.4 or newer.
+It is tested with CPython (aka ``python3``) and PyPy (aka ``pypy3``).
 
 .. _XRootD: http://xrootd.org
 
