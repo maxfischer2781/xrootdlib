@@ -28,33 +28,6 @@ def parse_cgi(cgi_data: AnyStr) -> Dict[AnyStr, AnyStr]:
     return data
 
 
-class ValueCacheDict(weakref.WeakValueDictionary):
-    """
-    Mapping acting as a cache for values
-
-    :param max_size: number of unused items held alive by the cache
-
-    Cache displacement is based on a usage+FIFO scheme:
-
-    - The cache *guarantees* only ``max_size`` items to stay alive.
-      Older items are displaced first.
-
-    - The cache *allows* for additional items with externally managed lifetime.
-      Items used throughout the application remain available until freed.
-    """
-    @property
-    def max_size(self):
-        return self._lifetime.maxlen()
-
-    def __init__(self, max_size: int):
-        self._lifetime = deque(maxlen=max_size)
-        super().__init__()
-
-    def __setitem__(self, key, value):
-        self._lifetime.append(value)
-        super().__setitem__(key, value)
-
-
 def verbose_repr(self):
     return '{slf.__class__.__name__}({attrs})'.format(
         slf=self, attrs=', '.join((attr + '=' + repr(getattr(self, attr))) for attr in self.__slots__)

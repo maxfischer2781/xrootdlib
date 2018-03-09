@@ -5,7 +5,6 @@ from .map import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, Map
 from .redir import XROOTD_MON as RXROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
 from .fstat import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
 from .trace import XROOTD_MON as TXROOTD_MON, AppId, Close, Disc, Open, ReadWrite, ReadU, ReadV, Window, Trace
-from ...utility import ValueCacheDict as _ValueCacheDict
 
 
 class Header(object):
@@ -46,7 +45,7 @@ class Map(object):
     the ``userid`` contains the *server* user data.
     """
     __slots__ = ('dictid', 'userid', 'payload')
-    _parser_cache = _ValueCacheDict(1024)
+    _parser_cache = {}
     payload_dispath = {
         b'=': SrvInfo,
         b'd': Path,
@@ -71,6 +70,8 @@ class Map(object):
             struct_parser = parser_cache[message_length]
         except KeyError:
             struct_parser = parser_cache[message_length] = struct.Struct('!L%ds' % (message_length - 8 - 4))
+            if len(cls._parser_cache) > 128:
+                print(cls._parser_cache.popitem())
         dictid, payload = struct_parser.unpack_from(record_data)  # type: int, bytes
         userid, _, map_info = payload.partition(b'\n')
         userid = UserId.from_buffer(userid)
