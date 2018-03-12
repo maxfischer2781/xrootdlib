@@ -124,9 +124,12 @@ class Burr(object):
         records = []
         record_view = memoryview(record_data)
         while record_view:
-            redir_type = record_view[0] & 0xf0
+            redir_type = record_view[0] & 0b11110000
             try:
-                payload_type = cls.payload_dispath[redir_type]  # type: Redir
+                if redir_type >> 7:  # high order bit is set for all but WindowMark
+                    payload_type = cls.payload_dispath[redir_type]  # type: Redir
+                else:
+                    payload_type = WindowMark
             except KeyError:
                 raise ValueError('unknown redir type %r' % redir_type)
             else:
