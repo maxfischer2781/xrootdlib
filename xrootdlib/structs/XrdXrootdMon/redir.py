@@ -2,6 +2,7 @@ import struct
 import enum
 from typing import Union
 
+from ...utility import slot_repr
 from .constants import XROOTD_MON_SIDMASK
 
 
@@ -64,7 +65,7 @@ class Redirect(object):
 
     @property
     def size(self) -> int:
-        return self.dent - 1
+        return (self.dent - 1) * 8 + self.struct_parser.size
 
     @property
     def local(self) -> bool:
@@ -87,9 +88,12 @@ class Redirect(object):
     @classmethod
     def from_buffer(cls, buffer: bytes):
         sumtype, dent, port, dictid = cls.struct_parser.unpack_from(buffer)  # type: int, int, int, int
-        server, _, path = buffer[cls.struct_parser.size:dent].rpartition(b':')
+        address = bytes(buffer[cls.struct_parser.size:(dent - 1) * 8 + cls.struct_parser.size])
+        server, _, path = address.rpartition(b':')
         type, subtype = XROOTD_MON(sumtype & 0xf0), XROOTD_MON(sumtype & 0x0f)
         return cls(type, subtype, dent, port, dictid, server, path)
+
+    __repr__ = slot_repr
 
 
 class RedirectArg0View(object):
@@ -154,6 +158,8 @@ class ServerIdent(object):
         sid = cls.struct_parser.unpack_from(buffer)[0] & XROOTD_MON_SIDMASK
         return cls(sid)
 
+    __repr__ = slot_repr
+
 
 class WindowMark(object):
     """
@@ -195,8 +201,10 @@ class WindowMark(object):
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
-        timestamp, duration = cls.struct_parser.unpack_from(buffer)  # type: int, int
-        return cls(timestamp, duration)
+        duration, timestamp = cls.struct_parser.unpack_from(buffer)  # type: int, int
+        return cls(timestamp, duration & 0b111111111111111111111111)
+
+    __repr__ = slot_repr
 
 
 class WindowMarkArg0View(object):
