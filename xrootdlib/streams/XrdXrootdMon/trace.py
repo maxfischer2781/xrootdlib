@@ -42,10 +42,10 @@ class Open(object):
 
 class Close(object):
     """A client closed a file"""
-    __slots__ = ('user', 'lfn', 'rtot', 'wtot')
+    __slots__ = ('client', 'lfn', 'rtot', 'wtot')
 
-    def __init__(self, user: Union[UserInfo, PathAccessInfo], lfn: bytes, rtot: int, wtot: int):
-        self.user, self.lfn, self.rtot, self.wtot = user, lfn, rtot, wtot
+    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, rtot: int, wtot: int):
+        self.client, self.lfn, self.rtot, self.wtot = client, lfn, rtot, wtot
 
     @classmethod
     def from_record(cls, record_struct: CloseStruct, stod: int, map_store: MapInfoStore):

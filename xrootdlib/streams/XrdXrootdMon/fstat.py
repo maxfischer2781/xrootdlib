@@ -41,10 +41,10 @@ class Open(object):
 
 class Close(object):
     """A client closed a file"""
-    __slots__ = ('user', 'lfn', 'stats')
+    __slots__ = ('client', 'lfn', 'stats')
 
-    def __init__(self, user: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileCLS):
-        self.user, self.lfn, self.stats = user, lfn, stats
+    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileCLS):
+        self.client, self.lfn, self.stats = client, lfn, stats
 
     @classmethod
     def from_record(cls, record_struct: FileCLS, stod: int, map_store: MapInfoStore):
@@ -55,10 +55,10 @@ class Close(object):
 
 class Transfer(object):
     """A client transfered a file"""
-    __slots__ = ('user', 'lfn', 'stats')
+    __slots__ = ('client', 'lfn', 'stats')
 
-    def __init__(self, user: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileXFR):
-        self.user, self.lfn, self.stats = user, lfn, stats
+    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileXFR):
+        self.client, self.lfn, self.stats = client, lfn, stats
 
     @classmethod
     def from_record(cls, record_struct: FileXFR, stod: int, map_store: MapInfoStore):
