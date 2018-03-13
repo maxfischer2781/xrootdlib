@@ -27,10 +27,10 @@ class Disconnect(object):
 
 class Open(object):
     """A client opened a file"""
-    __slots__ = ('user', 'lfn', 'filesize')
+    __slots__ = ('client', 'lfn', 'filesize')
 
-    def __init__(self, user: Union[UserInfo, PathAccessInfo], lfn: bytes, filesize: int):
-        self.filesize, self.user, self.lfn = filesize, user, lfn
+    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, filesize: int):
+        self.filesize, self.client, self.lfn = filesize, client, lfn
 
     @classmethod
     def from_record(cls, record_struct: OpenStruct, stod: int, map_store: MapInfoStore):
