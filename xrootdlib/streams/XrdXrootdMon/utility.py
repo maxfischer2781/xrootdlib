@@ -1,0 +1,65 @@
+import io
+import struct
+
+from xrootdlib.structs.XrdXrootdMon import Header as HeaderStruct, Packet
+
+
+def packet_from_buffer(packet_source: io.BufferedReader):
+    """Read a packet from a bytes buffer"""
+    try:
+        header_data = packet_source.read(HeaderStruct.size)
+        header = HeaderStruct.from_buffer(header_data)
+    except struct.error:
+        raise StopIteration
+    else:
+        return Packet.from_buffer(header_data + packet_source.read(header.plen - header.size))
+
+
+class PSeq(object):
+    """
+    Sortable *Packet Sequence*, an Integer from a wrapping (0, 255) range
+
+    :param pseq: the ``pseq`` of a packet
+
+    This represents the XRootD Packet Sequence for the purpose of comparisons.
+    It ensures that comparisons respects wrapping from 255 to 0.
+    In effect, a high-valued PSeq compares *less than* a low-valued PSeq.
+
+    :warning: This class does not implement a full Integer interface.
+    """
+    __slots__ = ('_value',)
+
+    def __init__(self, pseq: int):
+        assert 0 <= pseq <= 255, 'pseq must be an Integer from 0 to 255'
+        self._value = pseq
+
+    def __eq__(self, other: 'PSeq') -> bool:
+        return self._value == other._value
+
+    def __ne__(self, other: 'PSeq') -> bool:
+        return not self == other
+
+    def __gt__(self, other: 'PSeq') -> bool:
+        if self._value < 64 and other._value >= 191:
+            return True
+        return self._value > other._value
+
+    def __lt__(self, other: 'PSeq') -> bool:
+        if self._value < 64 and other._value >= 191:
+            return False
+        return self._value < other._value
+
+    def __ge__(self, other: 'PSeq') -> bool:
+        return self == other or self > other
+
+    def __le__(self, other: 'PSeq') -> bool:
+        return self == other or self < other
+
+    def __repr__(self):
+        return '<packet sequence %s>' % self._value
+
+    def __str__(self):
+        return str(self._value)
+
+    def __int__(self):
+        return self._value
