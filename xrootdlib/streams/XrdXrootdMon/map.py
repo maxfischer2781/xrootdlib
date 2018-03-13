@@ -58,6 +58,9 @@ class PathAccessInfo(object):
     __repr__ = slot_repr
 
 
+MapInfo = Union[ServerInfo, UserInfo, PathAccessInfo]
+
+
 class MapInfoError(KeyError):
     """An item was not in the map store"""
 

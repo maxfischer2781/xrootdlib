@@ -4,7 +4,8 @@ import chainlet
 
 from ...structs.XrdXrootdMon import Header as HeaderStruct, Buff as BuffStruct
 from ...structs.XrdXrootdMon.trace import XROOTD_MON, \
-    Window as WindowStruct, Close as CloseStruct, Disc as DiscStruct, Open as OpenStruct
+    Window as WindowStruct, Close as CloseStruct, Disc as DiscStruct, Open as OpenStruct, \
+    ReadWrite as ReadWriteStruct, ReadU as ReadUStruct, ReadV as ReadVStruct
 from .map import MapInfoStore, MapInfoError, ServerInfo, UserInfo, PathAccessInfo
 from ...utility import slot_repr
 
@@ -38,6 +39,32 @@ class Open(object):
         return cls(path_info, path_info.path, record_struct.filesize)
 
     __repr__ = slot_repr
+
+
+class ReadWrite(object):
+    """A client read from or wrote to a file"""
+    __slots__ = ('client', 'lfn', 'offset', 'read', 'write')
+
+    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, offset: int, read: int, write: int):
+        self.client, self.lfn, self.offset, self.read, self.write = client, lfn, offset, read, write
+
+    @classmethod
+    def from_record(cls, record_struct: ReadWriteStruct, stod: int, map_store: MapInfoStore):
+        path_info = map_store.get_path(stod, record_struct.dictid)
+        if record_struct.buflen > 0:
+            read, write = record_struct.buflen, 0
+        else:
+            write, read = record_struct.buflen, 0
+        return cls(path_info, path_info.path, record_struct.val, read, write)
+
+    __repr__ = slot_repr
+
+
+class ReadVector(object):
+    __slots__ = ('client', 'lfn', 'reads')
+
+    def __int__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, reads: List[int]):
+        self.client, self.lfn, self.reads = client, lfn, reads
 
 
 class Close(object):
