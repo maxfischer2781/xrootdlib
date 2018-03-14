@@ -32,8 +32,8 @@ Indices and tables
 
 ----------
 
-.. |issues| image:: https://img.shields.io/github/issues-raw/maxfischer2781/chainlet.svg
-   :target: https://github.com/maxfischer2781/chainlet/issues
+.. |issues| image:: https://img.shields.io/github/issues-raw/maxfischer2781/xrootdlib.svg
+   :target: https://github.com/maxfischer2781/xrootdlib/issues
    :alt: Open Issues
 
-Documentation built from chainlet |version| at |today|.
+Documentation built from xrootdlib |version| at |today|.

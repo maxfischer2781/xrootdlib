@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=chainlet
+set SPHINXPROJ=xrootdlib
 
 if "%1" == "" goto help
 
