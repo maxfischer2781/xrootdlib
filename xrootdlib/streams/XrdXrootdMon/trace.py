@@ -114,7 +114,7 @@ def digest_packet(header: HeaderStruct, buff_struct: BuffStruct, map_store: MapI
         'first element of Buff packet must be a Window Mark, not %s' % type(this_window)
     try:
         server_info = map_store.get_server(header.stod, this_window.sid)
-    except KeyError:
+    except MapInfoError:
         raise chainlet.StopTraversal
     records = []
     for record_struct in record_iter:
