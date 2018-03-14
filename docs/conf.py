@@ -183,7 +183,7 @@ def wraplet_signature(app, what, name, obj, options, signature, return_annotatio
     else:
         slave_argspec = autodoc.getargspec(wrapped)
         slave_signature = autodoc.formatargspec(obj, *slave_argspec)
-        return (slave_signature, return_annotation)
+        return slave_signature, return_annotation
 
 
 def setup(app):

@@ -4,7 +4,7 @@ import chainlet
 
 from ...structs.XrdXrootdMon import Header as HeaderStruct, Burr as BurrStruct
 from ...structs.XrdXrootdMon.redir import XROOTD_MON, \
-    Redirect as RedirectStruct, ServerIdent as ServerIdentStruct, WindowMark as WindowMarkStruct
+    Redirect as RedirectStruct, WindowMark as WindowMarkStruct
 from .map import MapInfoStore, MapInfoError, ServerInfo, UserInfo
 from ...utility import slot_repr
 

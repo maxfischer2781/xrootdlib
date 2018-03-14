@@ -5,7 +5,7 @@ import chainlet
 from ...structs.XrdXrootdMon import Header as HeaderStruct, Buff as BuffStruct
 from ...structs.XrdXrootdMon.trace import XROOTD_MON, \
     Window as WindowStruct, Close as CloseStruct, Disc as DiscStruct, Open as OpenStruct, \
-    ReadWrite as ReadWriteStruct, ReadU as ReadUStruct, ReadV as ReadVStruct
+    ReadWrite as ReadWriteStruct
 from .map import MapInfoStore, MapInfoError, ServerInfo, UserInfo, PathAccessInfo
 from ...utility import slot_repr
 

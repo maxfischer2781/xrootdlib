@@ -113,7 +113,10 @@ class FileOPN(object):
     def fsz(self):
         return self.filesize
 
-    def __init__(self, flags: int, size: int, fileid: int, filesize: int, user: Optional[int] = None, lfn: Optional[bytes] = None):
+    def __init__(
+            self, flags: int, size: int, fileid: int, filesize: int,
+            user: Optional[int] = None, lfn: Optional[bytes] = None
+    ):
         self.flags, self.size, self.fileid, self.filesize, self.user, self.lfn = \
             flags, size, fileid, filesize, user, lfn
 
@@ -224,7 +227,10 @@ class FileCLS(object):
             return self.struct_parser.size + StatOPS.size
         return self.struct_parser.size
 
-    def __init__(self, flags: int, fileid: int, read: int, readv: int, write: int, ops: Optional[StatOPS], ssq: Optional[StatSSQ]):
+    def __init__(
+            self, flags: int, fileid: int, read: int, readv: int, write: int,
+            ops: Optional[StatOPS], ssq: Optional[StatSSQ]
+    ):
         self.flags, self.fileid, self.read, self.readv, self.write, self.ops, self.ssq = \
             flags, fileid, read, readv, write, ops, ssq
 
@@ -253,7 +259,7 @@ class FileXFR(object):
     ``XrdXrootdMonFileXFR`` indicating file transfer statistics
 
     :param flags: unused
-    :param dictid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
+    :param fileid: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
     :param read: bytes read using ``read()``
     :param readv: bytes read using ``readv()``
     :param write: bytes written

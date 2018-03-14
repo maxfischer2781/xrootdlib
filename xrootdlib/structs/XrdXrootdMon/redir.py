@@ -196,8 +196,8 @@ class WindowMark(object):
     def arg1(self):
         return WindowMarkArg1View(self)
 
-    def __init__(self, timestamp: int, window: int):
-        self.timestamp, self.prev_duration = timestamp, window
+    def __init__(self, timestamp: int, prev_duration: int):
+        self.timestamp, self.prev_duration = timestamp, prev_duration
 
     @classmethod
     def from_buffer(cls, buffer: bytes):

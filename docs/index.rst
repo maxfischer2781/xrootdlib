@@ -36,4 +36,6 @@ Indices and tables
    :target: https://github.com/maxfischer2781/xrootdlib/issues
    :alt: Open Issues
 
+.. _XRootD: http://xrootd.org
+
 Documentation built from xrootdlib |version| at |today|.

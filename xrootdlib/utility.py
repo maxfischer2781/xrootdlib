@@ -1,5 +1,3 @@
-import weakref
-from collections import deque
 from typing import AnyStr, Dict
 
 
