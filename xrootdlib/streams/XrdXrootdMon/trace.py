@@ -107,6 +107,7 @@ convert_record_dispatch = {
 
 
 def digest_packet(header: HeaderStruct, buff_struct: BuffStruct, map_store: MapInfoStore):
+    """Digest a packet containing trace data"""
     stod = header.stod
     record_iter = iter(buff_struct.records)
     this_window = next(record_iter)

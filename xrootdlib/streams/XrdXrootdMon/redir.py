@@ -58,6 +58,7 @@ convert_record_dispatch = {
 
 
 def digest_packet(header: HeaderStruct, burr_struct: BurrStruct, map_store: MapInfoStore):
+    """Digest a packet containing redir data"""
     stod = header.stod
     try:
         server_info = map_store.get_server(header.stod, burr_struct.sid.sid)

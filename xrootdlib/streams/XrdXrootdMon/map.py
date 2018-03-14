@@ -81,6 +81,7 @@ class MapInfoStore(object):
         self._cleaner = MapInfoStoreCleaner(self)
 
     def digest_map(self, stod: int, map_struct: MapStruct):
+        """Digest map data from a packet"""
         digest_method = self._payload_dispatch[type(map_struct.payload)]
         try:
             return digest_method(stod, map_struct.dictid, map_struct.userid, map_struct.payload)

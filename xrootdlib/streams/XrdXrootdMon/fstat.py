@@ -92,6 +92,7 @@ convert_record_dispatch = {
 
 
 def digest_packet(header: HeaderStruct, fstat_struct: FstatStruct, map_store: MapInfoStore):
+    """Digest a packet containing fstat data"""
     try:
         server_info = map_store.get_server(header.stod, fstat_struct.tod.sid)
     except KeyError:
