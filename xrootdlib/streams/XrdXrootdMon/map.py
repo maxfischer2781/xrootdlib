@@ -61,7 +61,7 @@ class PathAccessInfo(object):
 MapInfo = Union[ServerInfo, UserInfo, PathAccessInfo]
 
 
-class MapInfoError(KeyError):
+class MapInfoError(Exception):
     """An item was not in the map store"""
 
 
