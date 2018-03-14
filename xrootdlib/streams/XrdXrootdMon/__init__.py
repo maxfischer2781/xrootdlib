@@ -97,13 +97,13 @@ class MappedStream(chainlet.ChainLink):
         yield self.map_store.digest_map(header.stod, map_struct)
 
     def _process_fstat(self, header: HeaderStruct, map_struct: FstatStruct):
-        yield digest_fstat_packet(header, map_struct, self.map_store)
+        yield digest_fstat_packet(header.stod, map_struct, self.map_store)
 
     def _process_trace(self, header: HeaderStruct, trace_struct: BuffStruct):
-        yield from digest_trace_packet(header, trace_struct, self.map_store)
+        yield from digest_trace_packet(header.stod, trace_struct, self.map_store)
 
     def _process_redir(self, header: HeaderStruct, map_struct: BurrStruct):
-        yield from digest_redir_packet(header, map_struct, self.map_store)
+        yield from digest_redir_packet(header.stod, map_struct, self.map_store)
 
 
 if __name__ == '__main__':

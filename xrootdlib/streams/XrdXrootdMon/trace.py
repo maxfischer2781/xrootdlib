@@ -106,15 +106,14 @@ convert_record_dispatch = {
 }
 
 
-def digest_packet(header: HeaderStruct, buff_struct: BuffStruct, map_store: MapInfoStore):
+def digest_packet(stod: int, buff_struct: BuffStruct, map_store: MapInfoStore):
     """Digest a packet containing trace data"""
-    stod = header.stod
     record_iter = iter(buff_struct.records)
     this_window = next(record_iter)
     assert isinstance(this_window, WindowStruct), \
         'first element of Buff packet must be a Window Mark, not %s' % type(this_window)
     try:
-        server_info = map_store.get_server(header.stod, this_window.sid)
+        server_info = map_store.get_server(stod, this_window.sid)
     except MapInfoError:
         raise chainlet.StopTraversal
     records = []

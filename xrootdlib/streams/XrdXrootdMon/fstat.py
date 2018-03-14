@@ -91,13 +91,12 @@ convert_record_dispatch = {
 }
 
 
-def digest_packet(header: HeaderStruct, fstat_struct: FstatStruct, map_store: MapInfoStore):
+def digest_packet(stod: int, fstat_struct: FstatStruct, map_store: MapInfoStore):
     """Digest a packet containing fstat data"""
     try:
-        server_info = map_store.get_server(header.stod, fstat_struct.tod.sid)
+        server_info = map_store.get_server(stod, fstat_struct.tod.sid)
     except KeyError:
         raise chainlet.StopTraversal
-    stod = header.stod
     records = []
     for record_struct in fstat_struct.records:
         converter = convert_record_dispatch[type(record_struct)]
