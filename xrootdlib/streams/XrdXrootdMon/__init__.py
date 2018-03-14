@@ -23,6 +23,8 @@ from .fstat import digest_packet as digest_fstat_packet
 from .trace import digest_packet as digest_trace_packet
 from .redir import digest_packet as digest_redir_packet
 
+__all__ = ['packet_streamer', 'MappedStream']
+
 
 @chainlet.genlet(prime=False)
 def packet_streamer(packet_source: IO[bytes], sort_window: int=8):
@@ -81,26 +83,26 @@ class MappedStream(chainlet.ChainLink):
     def __init__(self):
         self.map_store = MapInfoStore()
         self._packet_dispatch = {
-            MapStruct: self.process_map,
-            FstatStruct: self.process_fstat,
-            BuffStruct: self.process_trace,
-            BurrStruct: self.process_redir,
+            MapStruct: self._process_map,
+            FstatStruct: self._process_fstat,
+            BuffStruct: self._process_trace,
+            BurrStruct: self._process_redir,
         }
 
     def chainlet_send(self, value: Packet=None):
         processor = self._packet_dispatch[type(value.record)]
         return processor(value.header, value.record)
 
-    def process_map(self, header: HeaderStruct, map_struct: MapStruct):
+    def _process_map(self, header: HeaderStruct, map_struct: MapStruct):
         yield self.map_store.digest_map(header.stod, map_struct)
 
-    def process_fstat(self, header: HeaderStruct, map_struct: FstatStruct):
+    def _process_fstat(self, header: HeaderStruct, map_struct: FstatStruct):
         yield digest_fstat_packet(header, map_struct, self.map_store)
 
-    def process_trace(self, header: HeaderStruct, trace_struct: BuffStruct):
+    def _process_trace(self, header: HeaderStruct, trace_struct: BuffStruct):
         yield from digest_trace_packet(header, trace_struct, self.map_store)
 
-    def process_redir(self, header: HeaderStruct, map_struct: BurrStruct):
+    def _process_redir(self, header: HeaderStruct, map_struct: BurrStruct):
         yield from digest_redir_packet(header, map_struct, self.map_store)
 
 
