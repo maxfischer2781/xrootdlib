@@ -1,10 +1,10 @@
-import io
+from typing import IO
 import struct
 
 from xrootdlib.structs.XrdXrootdMon import Header as HeaderStruct, Packet
 
 
-def packet_from_buffer(packet_source: io.BufferedReader):
+def packet_from_buffer(packet_source: IO[bytes]):
     """Read a packet from a bytes buffer"""
     try:
         header_data = packet_source.read(HeaderStruct.size)

@@ -10,7 +10,7 @@ It provides two stream mechanisms of different complexity:
   :py:mod:`~.fstat`, :py:mod:`~.redir`, :py:mod:`~.trace`, and :py:mod:`~.map`
 """
 import io
-from typing import List, Tuple
+from typing import List, Tuple, IO
 
 import chainlet
 
@@ -25,7 +25,7 @@ from .redir import digest_packet as digest_redir_packet
 
 
 @chainlet.genlet(prime=False)
-def packet_streamer(packet_source: io.BufferedReader, sort_window: int=8):
+def packet_streamer(packet_source: IO[bytes], sort_window: int=8):
     """
     Provide a stream of packets from a readable bytes buffer
 
