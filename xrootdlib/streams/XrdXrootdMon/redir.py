@@ -2,7 +2,7 @@ from typing import List
 
 import chainlet
 
-from ...structs.XrdXrootdMon import Header as HeaderStruct, Burr as BurrStruct
+from ...structs.XrdXrootdMon import Burr as BurrStruct
 from ...structs.XrdXrootdMon.redir import XROOTD_MON, \
     Redirect as RedirectStruct, WindowMark as WindowMarkStruct
 from .map import MapInfoStore, MapInfoError, ServerInfo, UserInfo

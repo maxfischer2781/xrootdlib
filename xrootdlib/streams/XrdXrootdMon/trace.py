@@ -2,7 +2,7 @@ from typing import List, Union
 
 import chainlet
 
-from ...structs.XrdXrootdMon import Header as HeaderStruct, Buff as BuffStruct
+from ...structs.XrdXrootdMon import Buff as BuffStruct
 from ...structs.XrdXrootdMon.trace import XROOTD_MON, \
     Window as WindowStruct, Close as CloseStruct, Disc as DiscStruct, Open as OpenStruct, \
     ReadWrite as ReadWriteStruct

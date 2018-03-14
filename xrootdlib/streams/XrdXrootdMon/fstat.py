@@ -1,7 +1,7 @@
 import chainlet
 from typing import List, Union
 
-from ...structs.XrdXrootdMon import Header as HeaderStruct, Fstat as FstatStruct
+from ...structs.XrdXrootdMon import Fstat as FstatStruct
 from ...structs.XrdXrootdMon.fstat import recFval, FileDSC, FileOPN, FileCLS, FileXFR
 
 from .map import MapInfoStore, MapInfoError, ServerInfo, UserInfo, PathAccessInfo

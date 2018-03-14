@@ -9,7 +9,6 @@ It provides two stream mechanisms of different complexity:
 * :py:class:`~.MappedStream` provides a stream of
   :py:mod:`~.fstat`, :py:mod:`~.redir`, :py:mod:`~.trace`, and :py:mod:`~.map`
 """
-import io
 from typing import List, Tuple, IO
 
 import chainlet
