@@ -2,7 +2,7 @@
 ``xrootdlib`` - Tools for working with the XRootD middleware
 ============================================================
 
-The ``xrootdlib`` offers building blocks and basic tools to work with the `XRootD`_ data access middleware.
+The ``xrootdlib`` offers building blocks and basic tools to work with the XRootD_ data access middleware.
 It is meant to facilitate auxiliary work, such as monitoring, accounting and orchestration.
 
 Package Overview
