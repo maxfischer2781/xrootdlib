@@ -5,8 +5,8 @@ This module presents a high-level stream representation of the :py:mod:`~xrootdl
 ``struct`` primitives.
 It provides two stream mechanisms of different complexity:
 
-* :py:class:`~.packet_streamer` provides an ordered stream of raw :py:class:`~.Packet`
-* :py:class:`~.MappedStream` provides a stream of
+* :py:class:`~.stream_packets` provides an ordered stream of raw :py:class:`~.Packet`
+* :py:class:`~.map_streams` provides a stream of
   :py:mod:`~.fstat`, :py:mod:`~.redir`, :py:mod:`~.trace`, and :py:mod:`~.map`
 """
 from typing import List, Tuple, IO
@@ -22,11 +22,11 @@ from .fstat import digest_packet as digest_fstat_packet
 from .trace import digest_packet as digest_trace_packet
 from .redir import digest_packet as digest_redir_packet
 
-__all__ = ['packet_streamer', 'MappedStream']
+__all__ = ['stream_packets', 'map_streams']
 
 
 @chainlet.genlet(prime=False)
-def packet_streamer(packet_source: IO[bytes], sort_window: int=8):
+def stream_packets(packet_source: IO[bytes], sort_window: int=8):
     """
     Provide a stream of packets from a readable bytes buffer
 
@@ -57,7 +57,7 @@ def packet_streamer(packet_source: IO[bytes], sort_window: int=8):
         buffer.append((packet, PSeq(packet.header.pseq)))
 
 
-class MappedStream(chainlet.ChainLink):
+class StreamMapper(chainlet.ChainLink):
     """
     Provides a high-level representation of monitoring packets, resolving dependencies
 
@@ -104,14 +104,20 @@ class MappedStream(chainlet.ChainLink):
     def _process_redir(self, header: HeaderStruct, map_struct: BurrStruct):
         yield from digest_redir_packet(header.stod, map_struct, self.map_store)
 
+    def __repr__(self):
+        return 'map_streams()'
+
+
+map_streams = StreamMapper
+
 
 if __name__ == '__main__':
     import sys
     if len(sys.argv) != 2:
-        raise SystemExit("test with 'python3 -m %s <monitor dump file>'" % __package__)
+        raise SystemExit("test with 'python3 -m %s.__init__ <monitor dump file>'" % __package__)
     packet_path = sys.argv[1]
     with open(packet_path, 'rb') as packet_stream:
-        chain = packet_streamer(packet_stream) >> MappedStream()
+        chain = stream_packets(packet_stream) >> StreamMapper()
         for result in chain:
             if result is not None:
                 print(result)
