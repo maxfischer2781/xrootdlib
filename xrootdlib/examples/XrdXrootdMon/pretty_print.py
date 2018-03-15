@@ -4,7 +4,7 @@ import socket
 
 import chainlet
 
-from xrootdlib.streams.XrdXrootdMon import stream_packets, map_streams
+from xrootdlib.streams.XrdXrootdMon import stream_packets, map_streams, Packet
 from xrootdlib.streams.XrdXrootdMon.map import ServerInfo, UserInfo
 from xrootdlib.streams.XrdXrootdMon.redir import RedirWindow
 from xrootdlib.streams.XrdXrootdMon.fstat import FstatWindow, Disconnect, Open, Close, Transfer
@@ -48,6 +48,17 @@ def pretty_user(user: UserInfo):
 
 
 # formatter for specific information streams
+@chainlet.genlet
+def print_packet(initial=1):
+    count = initial
+    value = yield
+    assert isinstance(value, Packet)
+    while True:
+        print('Packet %3d [%6d]' % (value.header.pseq, count))
+        value = yield value
+        count += 1
+
+
 @chainlet.funclet
 def print_redir(value):
     if isinstance(value, RedirWindow):
@@ -81,6 +92,6 @@ def print_server(value):
 if __name__ == '__main__':
     options = CLI.parse_args()
     with options.SOURCE as packet_stream:
-        chain = stream_packets(packet_stream) >> map_streams() >> print_server() >> print_redir() >> print_fstat()
+        chain = stream_packets(packet_stream) >> print_packet() >> map_streams() >> print_server() >> print_redir() >> print_fstat()
         for result in chain:
             pass
