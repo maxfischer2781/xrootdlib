@@ -212,27 +212,19 @@ class FileCLS(object):
     :param ops: file operation statistics
     :param ssq: file operation statistic deviations
     """
-    __slots__ = ('flags', 'fileid', 'read', 'readv', 'write', 'ops', 'ssq')
+    __slots__ = ('flags', 'size', 'fileid', 'read', 'readv', 'write', 'ops', 'ssq')
     struct_parser = struct.Struct('!B B h L q q q')
 
     @property
     def xfr(self):
         return StatXFRView(self)
 
-    @property
-    def size(self):
-        if self.ssq:
-            return self.struct_parser.size + StatOPS.size + StatSSQ.size
-        elif self.ops:
-            return self.struct_parser.size + StatOPS.size
-        return self.struct_parser.size
-
     def __init__(
-            self, flags: int, fileid: int, read: int, readv: int, write: int,
+            self, flags: int, size: int, fileid: int, read: int, readv: int, write: int,
             ops: Optional[StatOPS], ssq: Optional[StatSSQ]
     ):
-        self.flags, self.fileid, self.read, self.readv, self.write, self.ops, self.ssq = \
-            flags, fileid, read, readv, write, ops, ssq
+        self.flags, self.size, self.fileid, self.read, self.readv, self.write, self.ops, self.ssq = \
+            flags, size, fileid, read, readv, write, ops, ssq
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
@@ -249,7 +241,7 @@ class FileCLS(object):
         else:
             assert rec_size == static_size, (rec_size, static_size)
             ops, ssq = None, None
-        return cls(rec_flag, dictid, read, readv, write, ops, ssq)
+        return cls(rec_flag, rec_size, dictid, read, readv, write, ops, ssq)
 
     __repr__ = slot_repr
 
