@@ -183,6 +183,8 @@ class StatOPS(object):
             rdmin, rdmax, rvmin, rvmax, wrmin, wrmax
         )
 
+    __repr__ = slot_repr
+
 
 class StatSSQ(object):
     """``XrdXrootdMonStatSSQ`` describing file operation statistic deviations"""
@@ -198,6 +200,8 @@ class StatSSQ(object):
         read, readv, rsegs, write = cls.struct_parser.unpack_from(buffer) \
             # type: int, int, int, int
         return cls(read, readv, rsegs, write)
+
+    __repr__ = slot_repr
 
 
 class FileCLS(object):
