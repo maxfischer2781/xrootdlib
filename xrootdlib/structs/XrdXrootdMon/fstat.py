@@ -125,7 +125,7 @@ class FileOPN(object):
         rec_type, rec_flag, rec_size, fileid, filesize = cls.struct_parser.unpack_from(buffer) \
             # type: int, int, int, int, int
         static_size = cls.struct_parser.size
-        if rec_size != static_size:
+        if rec_flag & recFval.hasLFN:
             user = int.from_bytes(buffer[static_size:static_size+4], byteorder='big')
             lfn = bytes(buffer[static_size+4:rec_size]).partition(b'\00')[0]
         else:
