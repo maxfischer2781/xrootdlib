@@ -77,7 +77,7 @@ class MapInfoStore(object):
             Path: self._digest_map_path,
         }
         # information lifetime control
-        self._server_lifetime = {}  # type: Dict[bytes, Tuple[int, int]]
+        self._server_lifetime = {}  # type: Dict[Tuple[bytes, int], Tuple[int, int]]
         self._cleaner = MapInfoStoreCleaner(self)
 
     def digest_map(self, stod: int, map_struct: MapStruct):
@@ -100,7 +100,7 @@ class MapInfoStore(object):
 
     def _digest_map_server(self, stod: int, dictid: int, user_id: UserId, server_info: SrvInfo):
         # colliding description to replace restarting instances
-        _instance_identifier = b'%s:%d' % (user_id.host, server_info.port)
+        _instance_identifier = (user_id.host, server_info.port)
         try:
             deprecated_sid = self._server_lifetime[_instance_identifier]
         except KeyError:
