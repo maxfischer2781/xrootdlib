@@ -280,6 +280,7 @@ class FileXFR(object):
     def from_buffer(cls, buffer: bytes):
         rec_type, rec_flag, rec_size, dictid, read, readv, write = cls.struct_parser.unpack_from(buffer) \
             # type: int, int, int, int, int, int, int
+        assert rec_size == cls.size, 'FileXFR must be fixed length'
         return cls(rec_flag, dictid, read, readv, write)
 
     __repr__ = slot_repr
