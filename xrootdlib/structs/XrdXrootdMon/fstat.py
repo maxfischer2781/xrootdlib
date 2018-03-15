@@ -83,7 +83,7 @@ class FileDSC(object):
     def from_buffer(cls, buffer: bytes):
         rec_type, rec_flag, rec_size, dictid = cls.struct_parser.unpack_from(buffer) \
             # type: int, int, int, int
-        assert rec_size == cls.size, 'FileCLS must be fixed length'
+        assert rec_size == cls.size, 'FileDSC must be fixed length'
         return cls(rec_flag, dictid)
 
     __repr__ = slot_repr
