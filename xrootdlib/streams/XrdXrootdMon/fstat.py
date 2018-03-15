@@ -95,7 +95,7 @@ def digest_packet(stod: int, fstat_struct: FstatStruct, map_store: MapInfoStore)
     """Digest a packet containing fstat data"""
     try:
         server_info = map_store.get_server(stod, fstat_struct.tod.sid)
-    except KeyError:
+    except MapInfoError:
         raise chainlet.StopTraversal
     records = []
     for record_struct in fstat_struct.records:
