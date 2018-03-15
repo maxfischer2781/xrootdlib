@@ -39,7 +39,7 @@ class RedirWindow(object):
     """Sequence of events in a time window"""
     __slots__ = ('server_info', 'start', 'end', 'records')
 
-    def __init__(self, server_info: ServerInfo, start: int, end: int, records: List):
+    def __init__(self, server_info: ServerInfo, start: int, end: int, records: List[Redirection]):
         self.server_info = server_info
         self.start = start
         self.end = end

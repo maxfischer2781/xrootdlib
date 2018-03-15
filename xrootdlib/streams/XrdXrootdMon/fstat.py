@@ -71,14 +71,14 @@ class FstatWindow(object):
     """Sequence of Open, Close and Disconnect events in a time window"""
     __slots__ = ('server_info', 'start', 'end', 'records')
 
-    def __init__(self, server_info: ServerInfo, start: int, end: int, records: List[Union[FileDSC, FileOPN]]):
+    def __init__(self, server_info: ServerInfo, start: int, end: int, records: List[Union[Disconnect, Open, Close, Transfer]]):
         self.server_info = server_info
         self.start = start
         self.end = end
         self.records = records
 
     def __repr__(self):
-        return '<%s, start=%d, end=%d, record_size=%d, server=%s>' % (
+        return '<%s, start=%d, end=%d, records=%d, server=%s>' % (
             self.__class__.__name__, self.start, self.end, len(self.records), self.server_info
         )
 
