@@ -71,9 +71,16 @@ def print_fstat(value):
     return value
 
 
+@chainlet.funclet
+def print_server(value):
+    if isinstance(value, ServerInfo):
+        print('Server', site_id(value))
+    return value
+
+
 if __name__ == '__main__':
     options = CLI.parse_args()
     with options.SOURCE as packet_stream:
-        chain = stream_packets(packet_stream) >> map_streams() >> print_redir() >> print_fstat()
+        chain = stream_packets(packet_stream) >> map_streams() >> print_server() >> print_redir() >> print_fstat()
         for result in chain:
             pass
