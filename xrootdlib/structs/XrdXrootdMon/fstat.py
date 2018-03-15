@@ -127,7 +127,7 @@ class FileOPN(object):
         static_size = cls.struct_parser.size
         if rec_size != static_size:
             user = int.from_bytes(buffer[static_size:static_size+4], byteorder='big')
-            lfn = bytes(buffer[static_size+4:rec_size-static_size]).partition(b'\00')[0]
+            lfn = bytes(buffer[static_size+4:rec_size]).partition(b'\00')[0]
         else:
             user, lfn = None, None
         return cls(rec_flag, rec_size, fileid, filesize, user, lfn)
