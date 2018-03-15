@@ -179,7 +179,7 @@ class Fstat(object):
             try:
                 payload_type = cls.payload_dispath[redir_type]  # type: FileRecord
             except KeyError:
-                raise ValueError('unknown redir type %r' % redir_type)
+                raise ValueError('unknown fstat type %r' % redir_type)
             else:
                 record = payload_type.from_buffer(record_view)
                 records.append(record)
