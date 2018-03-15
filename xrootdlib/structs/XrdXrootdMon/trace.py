@@ -91,6 +91,7 @@ class Open(object):
 class ReadWrite(object):
     __slots__ = ('val', 'buflen', 'dictid')
     struct_parser = struct.Struct('!q i L')
+    size = TRACE_SIZE
 
     @property
     def readlen(self):
