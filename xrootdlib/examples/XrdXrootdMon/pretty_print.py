@@ -63,7 +63,7 @@ def print_packet(initial=1):
     value = yield
     assert isinstance(value, Packet)
     while True:
-        print('Packet %3d [%6d]' % (value.header.pseq, count))
+        print('[P%3d] %s [%5dB] #%6d' % (value.header.pseq, value.header.code.decode(), value.header.plen, count))
         value = yield value
         count += 1
 
