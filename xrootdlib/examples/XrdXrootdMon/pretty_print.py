@@ -18,7 +18,8 @@ def readable_source(source: str):
     else:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.bind((host, int(port)))
-        return udp_socket.makefile(mode='rb')
+        # XRootD monitor packets are AT MOST 64kb in size
+        return udp_socket.makefile(mode='rb', buffering=64*1024)
 
 
 CLI = argparse.ArgumentParser("Pretty-print xrd.monitor stream from files or UDP")
