@@ -11,6 +11,14 @@ from xrootdlib.streams.XrdXrootdMon.fstat import FstatWindow, Disconnect, Open, 
 
 
 def readable_source(source: str):
+    """
+    Convert ``source`` to an object supporting ``.read(buffer_size)``
+
+    Supports the following sources:
+
+    * udp IPv4 address [``hostname:port``]
+    * file system path
+    """
     try:
         host, port = source.split(':')
     except ValueError:
@@ -22,8 +30,8 @@ def readable_source(source: str):
         return udp_socket.makefile(mode='rb', buffering=64*1024)
 
 
-CLI = argparse.ArgumentParser("Pretty-print xrd.monitor stream from files or UDP")
-CLI.add_argument('SOURCE', help='path or address to xrd.monitor stream', type=readable_source)
+CLI = argparse.ArgumentParser("Pretty-print xrd.monitor stream")
+CLI.add_argument('SOURCE', help='file system path or UDP IPv4 address:port to xrd.monitor stream', type=readable_source)
 
 
 # formatting helpers for individual information pieces
