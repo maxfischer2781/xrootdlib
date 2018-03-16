@@ -73,7 +73,7 @@ def print_redir(value):
     if isinstance(value, RedirWindow):
         print('Redir:', site_id(value.server_info), '[%s]' % timerange(value.start, value.end))
         for idx, record in enumerate(value.records):
-            print('  %3d:' % idx, record.action.name,
+            print(' %4dR' % idx, record.action.name,
                   '%s:%s/%s' % (record.target.decode(), record.port, record.path.decode()))
             print('      ', pretty_user(record.client))
     return value
@@ -86,7 +86,7 @@ def print_fstat(value):
         for idx, record in enumerate(value.records):
             if type(record) == Transfer:
                 continue
-            print('  %3d:' % idx, '{:<10}'.format(type(record).__name__), record.lfn.decode() if hasattr(record, 'lfn') else '')
+            print(' %4dF' % idx, '{:<10}'.format(type(record).__name__), record.lfn.decode() if hasattr(record, 'lfn') else '')
             print('      ', pretty_user(record.client))
     return value
 
