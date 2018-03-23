@@ -30,12 +30,9 @@ def readable_source(source: str):
         return udp_socket.makefile(mode='rb', buffering=64*1024)
 
 
-CLI = argparse.ArgumentParser("Pretty-print xrd.monitor stream")
-CLI.add_argument('SOURCE', help='file system path or UDP IPv4 address:port to xrd.monitor stream', type=readable_source)
-
-
 # formatting helpers for individual information pieces
 def timerange(start: int, end: int):
+    """Format a timerange indicated by a ``start`` and ``end`` timestamp"""
     return '%s %s-%s' % (
         time.strftime('%Y-%m-%d', time.localtime(start)),
         time.strftime('%H:%M:%S', time.localtime(start)),
@@ -44,6 +41,7 @@ def timerange(start: int, end: int):
 
 
 def site_id(server: ServerInfo):
+    """Format a server identifier"""
     return '{site} via {instance}@{host}:{port}'.format(
         site=server.site.decode(), host=server.host.decode(),
         port=server.port, instance=server.instance.decode()
@@ -51,6 +49,7 @@ def site_id(server: ServerInfo):
 
 
 def pretty_user(user: UserInfo):
+    """Format a user identifier"""
     return '{user}@{host}({pid}) [{protocol}]'.format(
         user=user.user.decode(), host=user.host.decode(), pid=user.pid, protocol=user.protocol.decode()
     )
@@ -59,6 +58,7 @@ def pretty_user(user: UserInfo):
 # formatter for specific information streams
 @chainlet.genlet
 def print_packet(initial=1):
+    """Print general information on packets"""
     count = initial
     value = yield
     assert isinstance(value, Packet)
@@ -70,6 +70,7 @@ def print_packet(initial=1):
 
 @chainlet.funclet
 def print_redir(value):
+    """Print detailed information on redirection packets"""
     if isinstance(value, RedirWindow):
         print('Redir:', site_id(value.server_info), '[%s]' % timerange(value.start, value.end))
         for idx, record in enumerate(value.records):
@@ -81,6 +82,7 @@ def print_redir(value):
 
 @chainlet.funclet
 def print_fstat(value):
+    """Print detailed information on file statistics packets"""
     if isinstance(value, FstatWindow):
         print('FStat:', site_id(value.server_info), '[%s]' % timerange(value.start, value.end))
         for idx, record in enumerate(value.records):
@@ -93,14 +95,57 @@ def print_fstat(value):
 
 @chainlet.funclet
 def print_server(value):
+    """Print detailed information on server identification packets"""
     if isinstance(value, ServerInfo):
         print('Server', site_id(value))
     return value
 
 
+PRINT_MAP = {
+    'packet': print_packet,
+    'redir': print_redir,
+    'fstat': print_fstat,
+    'server': print_server,
+}
+
+
+def print_type(identifier: str):
+    try:
+        printer = PRINT_MAP[identifier]
+    except KeyError:
+        raise argparse.ArgumentTypeError(
+            "unknown information type '%s' (expected any of '%s')" % (identifier, "', '".join(PRINT_MAP))
+        )
+    else:
+        return printer()
+
+
+# command line interface
+CLI = argparse.ArgumentParser(description="Pretty-print xrd.monitor stream")
+CLI.add_argument(
+    'SOURCE',
+    help='file system path or UDP IPv4 "address:port" to xrd.monitor stream',
+    type=readable_source
+)
+CLI.add_argument(
+    'WHAT',
+    help='the information to print from the stream',
+    nargs='*',
+    type=print_type,
+    default=[printer() for printer in PRINT_MAP.values()],
+)
+
+
 if __name__ == '__main__':
     options = CLI.parse_args()
     with options.SOURCE as packet_stream:
-        chain = stream_packets(packet_stream) >> print_packet() >> map_streams() >> print_server() >> print_redir() >> print_fstat()
+        chain = stream_packets(packet_stream)
+        # operations on raw packets
+        for what in (elem for elem in options.WHAT if isinstance(elem, print_packet)):
+            chain >>= what
+        chain >>= map_streams()
+        # operations on mapped records
+        for what in (elem for elem in options.WHAT if not isinstance(elem, print_packet)):
+                chain >>= what
         for result in chain:
             pass
