@@ -46,11 +46,15 @@ class PSeq(object):
     def __gt__(self, other: 'PSeq') -> bool:
         if self._value < 64 and other._value >= 191:
             return True
+        elif other._value < 64 and self._value >= 191:
+            return False
         return self._value > other._value
 
     def __lt__(self, other: 'PSeq') -> bool:
         if self._value < 64 and other._value >= 191:
             return False
+        elif other._value < 64 and self._value >= 191:
+            return True
         return self._value < other._value
 
     def __ge__(self, other: 'PSeq') -> bool:
