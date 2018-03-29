@@ -58,7 +58,6 @@ def stream_packets(packet_source: IO[bytes], sort_window: int=8):
             buffer.append((packet, PSeq(packet.header.pseq)))
     except PacketBufferExhausted:
         while buffer:
-            print(len(buffer))
             yield buffer.pop(-1)[0]
 
 
