@@ -50,12 +50,17 @@ class PSeq(object):
             return False
         return self._value > other._value
 
+    # Note:
+    # - Python guarantees to use __lt__ for sorting
+    # - PSeq is intended for DESCENDING orrdering
+    # - the likely test case is `small < large`
+    # - __lt__ should be optimised for `self < other` tests
     def __lt__(self, other: 'PSeq') -> bool:
-        if self._value < 64 and other._value >= 191:
-            return False
-        elif other._value < 64 and self._value >= 191:
+        if other._value < 64 and self._value >= 191:
             return True
-        return self._value < other._value
+        elif self._value >= 64 or other._value < 191:
+            return self._value < other._value
+        return False
 
     def __ge__(self, other: 'PSeq') -> bool:
         return self == other or self > other
