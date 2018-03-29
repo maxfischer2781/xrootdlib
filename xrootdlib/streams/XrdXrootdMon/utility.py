@@ -4,13 +4,17 @@ import struct
 from xrootdlib.structs.XrdXrootdMon import Header as HeaderStruct, Packet
 
 
+class PacketBufferExhausted(Exception):
+    """The buffer of packet data is exhausted"""
+
+
 def packet_from_buffer(packet_source: IO[bytes]):
     """Read a packet from a bytes buffer"""
     try:
         header_data = packet_source.read(HeaderStruct.size)
         header = HeaderStruct.from_buffer(header_data)
     except struct.error:
-        raise StopIteration
+        raise PacketBufferExhausted
     else:
         return Packet.from_buffer(header_data + packet_source.read(header.plen - header.size))
 

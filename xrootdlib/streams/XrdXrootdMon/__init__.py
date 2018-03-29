@@ -16,7 +16,7 @@ import chainlet
 from ...structs.XrdXrootdMon import Packet,\
     Header as HeaderStruct, Map as MapStruct, Fstat as FstatStruct, Buff as BuffStruct, Burr as BurrStruct
 
-from .utility import packet_from_buffer, PSeq
+from .utility import packet_from_buffer, PSeq, PacketBufferExhausted
 from .map import MapInfoStore
 from .fstat import digest_packet as digest_fstat_packet
 from .trace import digest_packet as digest_trace_packet
@@ -50,11 +50,16 @@ def stream_packets(packet_source: IO[bytes], sort_window: int=8):
     while len(buffer) < sort_window:
         packet = packet_from_buffer(packet_source)
         buffer.append((packet, PSeq(packet.header.pseq)))
-    while True:
-        buffer.sort(key=lambda packet_pseq: packet_pseq[1], reverse=True)
-        yield buffer.pop(-1)[0]
-        packet = packet_from_buffer(packet_source)
-        buffer.append((packet, PSeq(packet.header.pseq)))
+    try:
+        while True:
+            buffer.sort(key=lambda packet_pseq: packet_pseq[1], reverse=True)
+            yield buffer.pop(-1)[0]
+            packet = packet_from_buffer(packet_source)
+            buffer.append((packet, PSeq(packet.header.pseq)))
+    except PacketBufferExhausted:
+        while buffer:
+            print(len(buffer))
+            yield buffer.pop(-1)[0]
 
 
 class StreamMapper(chainlet.ChainLink):
