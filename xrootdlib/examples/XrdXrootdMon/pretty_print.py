@@ -60,10 +60,24 @@ def pretty_user(user: UserInfo):
 def print_packet(initial=1):
     """Print general information on packets"""
     count = initial
+    code_map = {
+        b'=': 'SrvInfo',
+        b'd': 'Path',
+        b'i': 'AppInfo',
+        b'p': 'PrgInfo',
+        b'u': 'AuthInfo',
+        b'x': 'XfrInfo',
+        b'r': 'Burr',
+        b't': 'Buff',
+        b'f': 'Fstat'
+    }
     value = yield
     assert isinstance(value, Packet)
     while True:
-        print('[P%3d] %s [%5dB] #%6d' % (value.header.pseq, value.header.code.decode(), value.header.plen, count))
+        print('[P%3d] %s [%5dB] #%6d "%s"' % (
+            value.header.pseq, value.header.code.decode(), value.header.plen, count,
+            code_map[value.header.code]
+        ))
         value = yield value
         count += 1
 
