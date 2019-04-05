@@ -1,3 +1,16 @@
+"""
+Structs used for the *Detailed Monitoring Data Format* streams sent by servers.
+See the ``all.monitor`` directive and `XRootD Monitoring`_ for details.
+
+All types implement a ``Type[T].from_XXX(buffer: bytes) -> T`` constructor method,
+where XXX describes the appropriate section.
+These section are ``buffer`` or ``record``, which represent the stream buffer
+either at the start of a packet or the start of a record.
+Unless you explicitly have a need otherwise, use :py:meth:`Packet.from_buffer`
+to read an entire packet at a time.
+
+.. _XRootD Monitoring: http://xrootd.org/doc/dev44/xrd_monitoring.htm
+"""
 import struct
 from typing import List, Union, Dict
 
@@ -25,8 +38,13 @@ class Header(object):
             code, pseq, plen, stod
 
     @classmethod
-    def from_buffer(cls, packet_header: bytes):
-        code, pseq, plen, stod = cls.struct_parser.unpack_from(packet_header)  # type: bytes, int, int, int
+    def from_buffer(cls, buffer: bytes) -> 'Header':
+        """
+        Extract the header from the start of a stream packet buffer
+
+        :param buffer: buffer containing a monitor stream packet
+        """
+        code, pseq, plen, stod = cls.struct_parser.unpack_from(buffer)  # type: bytes, int, int, int
         return cls(code, pseq, plen, stod)
 
 
@@ -46,7 +64,8 @@ class Map(object):
     """
     __slots__ = ('dictid', 'userid', 'payload')
     _parser_cache = {}
-    payload_dispath = {
+    #: record type => appropriate record struct
+    _payload_dispatch = {
         b'=': SrvInfo,
         b'd': Path,
         b'i': AppInfo,
@@ -63,7 +82,13 @@ class Map(object):
             slf=self, dictid=self.dictid, userid=self.userid, payload=self.payload)
 
     @classmethod
-    def from_record(cls, record_data: bytes, record_code: bytes):
+    def from_record(cls, record_data: bytes, record_code: bytes) -> 'Map':
+        """
+        Extract the record from the record portion of a stream packet buffer
+
+        :param record_data: buffer at the start of the record of a monitor stream packet
+        :param record_code: the :py:attr:`~.Header.code` field for this packet
+        """
         message_length = len(record_data)
         parser_cache = cls._parser_cache
         try:
@@ -76,7 +101,7 @@ class Map(object):
         userid, _, map_info = payload.partition(b'\n')
         userid = UserId.from_buffer(userid)
         try:
-            payload_type = cls.payload_dispath[record_code]
+            payload_type = cls._payload_dispatch[record_code]
         except KeyError:
             raise ValueError('unknown record code %r' % record_code)
         else:
@@ -86,18 +111,20 @@ class Map(object):
 
 class Burr(object):
     """
-    ``XrdXrootdMonBurr`` describing redirection events
+    ``XrdXrootdMonBurr`` ("r-stream") describing redirection events
 
     :param sid: identification of the server sending events
     :param records: individual operations requested by clients
 
-    The ``records`` field contains operation redirection records (:py:class:`Redirect`)
+    The ``records`` field contains redirection records (:py:class:`~.Redirect`)
     framed by window marks (:py:class:`~.WindowMark`).
-    In other words, ``records`` contains one *or more* sequences of records,
+    In other words, ``records`` is a *flat* sequence of
+    one *or more* sequences of records,
     with marks at the start, end and between sequences.
     """
     __slots__ = ('sid', 'records')
-    payload_dispath = {
+    #: segment identifier => appropriate record struct
+    _record_dispatch = {
         RXROOTD_MON.REDIRECT: Redirect,
         RXROOTD_MON.REDLOCAL: Redirect,
         RXROOTD_MON.REDTIME: WindowMark,
@@ -118,16 +145,24 @@ class Burr(object):
         self.sid, self.records = sid, records
 
     @classmethod
-    def from_record(cls, record_data: bytes, record_code: bytes = b'r'):
+    def from_record(cls, record_data: bytes, record_code: bytes = b'r') -> 'Burr':
+        """
+        Extract the record from the record portion of a stream packet buffer
+
+        :param record_data: buffer at the start of the record of a monitor stream packet
+        :param record_code: the :py:attr:`~.Header.code` field for this packet
+
+        :note: The only valid record code for this class is ``b'r'``.
+        """
         if record_code != b'r':
-            raise ValueError('unknown record code %r' % record_code)
+            raise ValueError('unknown record code %r (expected %r)' % (record_code, b'r'))
         records = []
         record_view = memoryview(record_data)
         while record_view:
             redir_type = record_view[0] & 0b11110000
             try:
                 if redir_type >> 7:  # high order bit is set for all but WindowMark
-                    payload_type = cls.payload_dispath[redir_type]  # type: Redir
+                    payload_type = cls._record_dispatch[redir_type]  # type: Redir
                 else:
                     payload_type = WindowMark
             except KeyError:
@@ -143,10 +178,20 @@ class Burr(object):
 
 class Fstat(object):
     """
-    virtual ``XrdXrootdMonFstat`` describing the general file access
+    ``XrdXrootdMonFstat`` ("f-stream") describing the general file access
 
     :param tod: identifier for the server and time window
     :param records: file operations and statistics
+
+    The ``records`` is a flat sequence of
+    open records (:py:class:`~.FileOPN`),
+    transfer records (:py:class:`~.FileXFR`, if ``fstat xfr`` is configured),
+    close records (:py:class:`~.FileCLS`),
+    and
+    disconnect records (:py:class:`~.FileDSC`).
+    As per the specification,
+    for every access the records are provided in this order.
+    However, records for one access may be spread over multiple time windows.
     """
     __slots__ = ('tod', 'records')
     payload_dispath = {
@@ -169,9 +214,17 @@ class Fstat(object):
         self.tod, self.records = tod, records
 
     @classmethod
-    def from_record(cls, record_data: bytes, record_code: bytes = b'r'):
+    def from_record(cls, record_data: bytes, record_code: bytes = b'f') -> 'Fstat':
+        """
+        Extract the record from the record portion of a stream packet buffer
+
+        :param record_data: buffer at the start of the record of a monitor stream packet
+        :param record_code: the :py:attr:`~.Header.code` field for this packet
+
+        :note: The only valid record code for this class is ``b'f'``.
+        """
         if record_code != b'f':
-            raise ValueError('unknown record code %r' % record_code)
+            raise ValueError('unknown record code %r (expected %r)' % (record_code, b'f'))
         records = []
         record_view = memoryview(record_data)
         while record_view:
@@ -191,9 +244,15 @@ class Fstat(object):
 
 class Buff(object):
     """
-    ``XrdXrootdMonBuff`` describing trace events
+    ``XrdXrootdMonBuff`` ("t-stream") describing trace events
 
     :param records: individual file operation events
+
+    The ``records`` field contains various trace records
+    framed by window marks (:py:class:`~.Window`).
+    In other words, ``records`` is a *flat* sequence of
+    one *or more* sequences of records,
+    with marks at the start, end and between sequences.
     """
     __slots__ = ('records',)
     payload_dispath = {
@@ -211,9 +270,17 @@ class Buff(object):
         self.records = records
 
     @classmethod
-    def from_record(cls, record_data: bytes, record_code: bytes = b't'):
+    def from_record(cls, record_data: bytes, record_code: bytes = b't') -> 'Buff':
+        """
+        Extract the record from the record portion of a stream packet buffer
+
+        :param record_data: buffer at the start of the record of a monitor stream packet
+        :param record_code: the :py:attr:`~.Header.code` field for this packet
+
+        :note: The only valid record code for this class is ``b't'``.
+        """
         if record_code != b't':
-            raise ValueError('unknown record code %r' % record_code)
+            raise ValueError('unknown record code %r (expected %r)' % (record_code, b't'))
         records = []
         record_view = memoryview(record_data)
         while record_view:
@@ -232,7 +299,8 @@ class Buff(object):
         return cls(records)
 
 
-PacketRecord = Union[Map, Burr, Buff]
+#: Record types in a packet
+PacketRecord = Union[Map, Burr, Fstat, Buff]
 
 
 class Packet(object):
@@ -243,7 +311,7 @@ class Packet(object):
     :param record: the actual information carried by the packet
     """
     __slots__ = ('header', 'record')
-    record_dispath = {key: Map for key in Map.payload_dispath.keys()}  # type: Dict[bytes, PacketRecord]
+    record_dispath = {key: Map for key in Map._payload_dispatch.keys()}  # type: Dict[bytes, PacketRecord]
     record_dispath[b'r'] = Burr
     record_dispath[b't'] = Buff
     record_dispath[b'f'] = Fstat
@@ -262,6 +330,11 @@ class Packet(object):
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
+        """
+        Extract the entire packet from the start of a stream packet buffer
+
+        :param buffer: buffer containing a monitor stream packet
+        """
         header = Header.from_buffer(buffer)
         try:
             record_type = cls.record_dispath[header.code]  # type: PacketRecord
