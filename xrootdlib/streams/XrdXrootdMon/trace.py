@@ -63,7 +63,7 @@ class ReadWrite(object):
 class ReadVector(object):
     __slots__ = ('client', 'lfn', 'reads')
 
-    def __int__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, reads: List[int]):
+    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, reads: List[int]):
         self.client, self.lfn, self.reads = client, lfn, reads
 
 
