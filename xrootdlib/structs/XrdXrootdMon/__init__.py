@@ -30,7 +30,7 @@ class Header(object):
     :param stod: daemon start timestamp
     """
     __slots__ = ('code', 'pseq', 'plen', 'stod')
-    struct_parser = struct.Struct('!c B h l')
+    struct_parser = struct.Struct('!c B H l')
     size = struct_parser.size
 
     def __init__(self, code: bytes, pseq: int, plen: int, stod: int):
