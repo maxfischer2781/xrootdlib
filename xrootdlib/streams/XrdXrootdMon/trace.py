@@ -5,7 +5,7 @@ import chainlet
 from ...structs.XrdXrootdMon import Buff as BuffStruct
 from ...structs.XrdXrootdMon.trace import XROOTD_MON, \
     Window as WindowStruct, Close as CloseStruct, Disc as DiscStruct, Open as OpenStruct, \
-    ReadWrite as ReadWriteStruct
+    ReadWrite as ReadWriteStruct, ReadU as ReadUStruct, ReadV as ReadVStruct
 from .map import MapInfoStore, MapInfoError, ServerInfo, UserInfo, PathAccessInfo
 from ...utility import slot_repr
 
@@ -99,10 +99,18 @@ class TraceWindow(object):
         )
 
 
+def ignore_not_implemented(record_struct, stod, map_store):
+    """Skip structs that are currently not implemented"""
+    raise MapInfoError()
+
+
 convert_record_dispatch = {
     CloseStruct: Close.from_record,
     OpenStruct: Open.from_record,
     DiscStruct: Disconnect.from_record,
+    ReadWriteStruct: ReadWrite.from_record,
+    ReadUStruct: ignore_not_implemented,
+    ReadVStruct: ignore_not_implemented,
 }
 
 
