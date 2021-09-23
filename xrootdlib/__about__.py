@@ -11,7 +11,7 @@ __title__ = 'xrootdlib'
 __summary__ = 'library for working with the XRootD middleware'
 __url__ = 'https://github.com/maxfischer2781/xrootdlib'
 
-__version__ = '0.1.0pre'
+__version__ = '0.2.0'
 __author__ = 'Max Fischer'
 __email__ = 'maxfischer2781@gmail.com'
 __copyright__ = '2018 %s' % __author__
