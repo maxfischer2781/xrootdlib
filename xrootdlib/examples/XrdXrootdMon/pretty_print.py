@@ -1,13 +1,15 @@
 import argparse
 import time
 import socket
+import collections
 
 import chainlet
 
 from xrootdlib.streams.XrdXrootdMon import stream_packets, map_streams, Packet
 from xrootdlib.streams.XrdXrootdMon.map import ServerInfo, UserInfo
 from xrootdlib.streams.XrdXrootdMon.redir import RedirWindow
-from xrootdlib.streams.XrdXrootdMon.fstat import FstatWindow, Disconnect, Open, Close, Transfer
+from xrootdlib.streams.XrdXrootdMon.fstat import FstatWindow, Transfer
+from xrootdlib.streams.XrdXrootdMon.trace import TraceWindow
 
 
 def readable_source(source: str):
@@ -108,6 +110,32 @@ def print_fstat(value):
 
 
 @chainlet.funclet
+def print_fstat_sum(value):
+    """Print summary information on file statistics packets"""
+    if isinstance(value, FstatWindow):
+        print('FStat:', site_id(value.server_info), '[%s]' % timerange(value.start, value.end))
+        counts = collections.Counter(type(record).__name__ for record in value.records)
+        print(
+            ' %4d Total' % sum(counts.values()),
+            *('%4d %s' % (count, name) for name, count in sorted(counts.items()))
+        )
+    return value
+
+
+@chainlet.funclet
+def print_trace_sum(value):
+    """Print summary information on file access trace packets"""
+    if isinstance(value, TraceWindow):
+        print('Trace:', site_id(value.server_info), '[%s]' % timerange(value.start, value.end))
+        counts = collections.Counter(type(record).__name__ for record in value.records)
+        print(
+            ' %4d Total' % sum(counts.values()),
+            *('%4d %s' % (count, name) for name, count in sorted(counts.items()))
+        )
+    return value
+
+
+@chainlet.funclet
 def print_server(value):
     """Print detailed information on server identification packets"""
     if isinstance(value, ServerInfo):
@@ -119,6 +147,8 @@ PRINT_MAP = {
     'packet': print_packet,
     'redir': print_redir,
     'fstat': print_fstat,
+    'fstats': print_fstat_sum,
+    'traces': print_trace_sum,
     'server': print_server,
 }
 
