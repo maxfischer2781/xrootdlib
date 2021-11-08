@@ -31,12 +31,12 @@ class Open(object):
     @classmethod
     def from_record(cls, record_struct: FileOPN, stod: int, map_store: MapInfoStore):
         read_write = bool(record_struct.flags & recFval.hasRW)
-        if record_struct.user is not None:
-            client = map_store.get_user(stod, record_struct.user)
-            return cls(client, record_struct.lfn, read_write, record_struct.filesize)
-        else:
+        if record_struct.user is None:
             path_info = map_store.get_path(stod, record_struct.fileid)
             return cls(path_info, path_info.path, read_write, record_struct.filesize)
+        else:
+            client = map_store.get_user(stod, record_struct.user)
+            return cls(client, record_struct.lfn, read_write, record_struct.filesize)
 
 
 class Close(object):
