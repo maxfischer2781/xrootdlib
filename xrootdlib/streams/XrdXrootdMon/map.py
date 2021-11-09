@@ -56,25 +56,31 @@ class UserInfo(object):
 
 
 class PathAccessInfo(object):
+    """
+    Metadata of a ``client`` accessing a ``path`` on a ``server``
+
+    Depending on the monitoring settings, ``client`` and ``auth`` may be unavailable
+    and just :py:data:`None`.
+    """
     __slots__ = ('client', 'server', 'path', 'auth')
 
     @property
     def protocol(self):
-        return self.client.prot
+        return self.client.prot if self.client is not None else None
 
     @property
     def user(self):
-        return self.client.user
+        return self.client.user if self.client is not None else None
 
     @property
     def pid(self):
-        return self.client.pid
+        return self.client.pid if self.client is not None else None
 
     @property
     def host(self):
-        return self.client.host
+        return self.client.host if self.client is not None else None
 
-    def __init__(self, client: UserId, server: ServerInfo, path: bytes, auth: Optional[AuthInfo] = None):
+    def __init__(self, client: Optional[UserId], server: ServerInfo, path: bytes, auth: Optional[AuthInfo] = None):
         self.client = client
         self.server = server
         self.path = path
