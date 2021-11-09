@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, Optional
 import threading
 import weakref
 import time
@@ -29,26 +29,26 @@ class ServerInfo(object):
 
 
 class UserInfo(object):
-    __slots__ = ('user_id', 'server', 'auth_info')
+    __slots__ = ('client', 'server', 'auth_info')
 
     @property
     def protocol(self):
-        return self.user_id.prot
+        return self.client.prot
 
     @property
     def user(self):
-        return self.user_id.user
+        return self.client.user
 
     @property
     def pid(self):
-        return self.user_id.pid
+        return self.client.pid
 
     @property
     def host(self):
-        return self.user_id.host
+        return self.client.host
 
-    def __init__(self, user_id: UserId, server_info: ServerInfo, auth_info: AuthInfo = None):
-        self.user_id = user_id
+    def __init__(self, client: UserId, server_info: ServerInfo, auth_info: Optional[AuthInfo] = None):
+        self.client = client
         self.server = server_info
         self.auth_info = auth_info
 
@@ -56,17 +56,29 @@ class UserInfo(object):
 
 
 class PathAccessInfo(object):
-    __slots__ = ('protocol', 'user', 'pid', 'server', 'host', 'path')
-    # dummy attributes in case we take the place of :py:class:`UserInfo`
-    auth_info = None
+    __slots__ = ('client', 'server', 'path', 'auth')
 
-    def __init__(self, user_id: UserId, server_info: ServerInfo, path_info: Path):
-        self.protocol = user_id.prot
-        self.user = user_id.user
-        self.pid = user_id.pid
-        self.server = server_info
-        self.host = user_id.host
-        self.path = path_info.path
+    @property
+    def protocol(self):
+        return self.client.prot
+
+    @property
+    def user(self):
+        return self.client.user
+
+    @property
+    def pid(self):
+        return self.client.pid
+
+    @property
+    def host(self):
+        return self.client.host
+
+    def __init__(self, client: UserId, server: ServerInfo, path: bytes, auth: Optional[AuthInfo] = None):
+        self.client = client
+        self.server = server
+        self.path = path
+        self.auth = auth
 
     __repr__ = slot_repr
 
@@ -80,9 +92,9 @@ class MapInfoError(Exception):
 
 class MapInfoStore(object):
     def __init__(self):
-        self._server_info = {}  # type: Dict[Tuple[int, int], ServerInfo]
-        self._user_info = {}  # type: Dict[Tuple[int, int], UserInfo]
-        self._path_info = {}  # type: Dict[Tuple[int, int], PathAccessInfo]
+        self._server_info: Dict[Tuple[int, int], ServerInfo] = {}
+        self._user_info: Dict[Tuple[int, int], UserInfo] = {}
+        self._access_info: Dict[Tuple[int, int], PathAccessInfo] = {}
         # parser/converter dispatch
         self._payload_dispatch = {
             SrvInfo: self._digest_map_server,
@@ -106,10 +118,10 @@ class MapInfoStore(object):
         user_info = self._user_info[stod, dictid] = UserInfo(user_id, server_info, auth_info)
         return user_info
 
-    def _digest_map_path(self, stod: int, dictid: int, user_id: UserId, path_info: Path):
+    def _digest_map_path(self, stod: int, dictid: int, user_id: UserId, path_info: Path) -> PathAccessInfo:
         server_info = self.get_server(stod, user_id.sid)
-        path_info = self._path_info[stod, dictid] = PathAccessInfo(user_id, server_info, path_info)
-        return path_info
+        item = self._access_info[stod, dictid] = PathAccessInfo(user_id, server_info, path_info.path)
+        return item
 
     def _digest_map_server(self, stod: int, dictid: int, user_id: UserId, server_info: SrvInfo):
         # colliding description to replace restarting instances
@@ -132,14 +144,20 @@ class MapInfoStore(object):
     def free_user(self, stod: int, dictid: int) -> None:
         self._cleaner.add_deletion(self._user_info.pop, (stod, dictid), None)
 
-    def get_path(self, stod: int, dictid: int) -> PathAccessInfo:
+    def set_access(self, stod: int, dictid: int, userid: int, path: bytes) -> PathAccessInfo:
+        """Add a file access info based on an FStat Open with LFN"""
+        user_info = self.get_user(stod, userid)
+        item = self._access_info[stod, dictid] = PathAccessInfo(user_info.user_id, user_info.server, path, user_info.auth_info)
+        return item
+
+    def get_access(self, stod: int, dictid: int) -> PathAccessInfo:
         try:
-            return self._path_info[stod, dictid]
+            return self._access_info[stod, dictid]
         except KeyError:
             raise MapInfoError
 
-    def free_path(self, stod: int, dictid: int) -> None:
-        self._cleaner.add_deletion(self._path_info.pop, (stod, dictid), None)
+    def free_access(self, stod: int, dictid: int) -> None:
+        self._cleaner.add_deletion(self._access_info.pop, (stod, dictid), None)
 
     def get_server(self, stod: int, sid: int) -> ServerInfo:
         try:

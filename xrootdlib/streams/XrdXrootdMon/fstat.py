@@ -32,10 +32,12 @@ class Open(object):
     def from_record(cls, record_struct: FileOPN, stod: int, map_store: MapInfoStore):
         read_write = bool(record_struct.flags & recFval.hasRW)
         if record_struct.user is None:
-            path_info = map_store.get_path(stod, record_struct.fileid)
+            # the record does not store the user/lfn – get it from the map stream
+            path_info = map_store.get_access(stod, record_struct.fileid)
             return cls(path_info, path_info.path, read_write, record_struct.filesize)
         else:
-            client = map_store.get_user(stod, record_struct.user)
+            # the record does provide the user/lfn – put it into the map stream
+            client = map_store.get_user(stod, record_struct.user) if record_struct.user > 0 else None
             return cls(client, record_struct.lfn, read_write, record_struct.filesize)
 
 
@@ -48,8 +50,8 @@ class Close(object):
 
     @classmethod
     def from_record(cls, record_struct: FileCLS, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.fileid)
-        map_store.free_path(stod, record_struct.fileid)
+        path_info = map_store.get_access(stod, record_struct.fileid)
+        map_store.free_access(stod, record_struct.fileid)
         return cls(path_info, path_info.path, record_struct)
 
 
@@ -62,8 +64,8 @@ class Transfer(object):
 
     @classmethod
     def from_record(cls, record_struct: FileXFR, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.fileid)
-        map_store.free_path(stod, record_struct.fileid)
+        path_info = map_store.get_access(stod, record_struct.fileid)
+        map_store.free_access(stod, record_struct.fileid)
         return cls(path_info, path_info.path, record_struct)
 
 
