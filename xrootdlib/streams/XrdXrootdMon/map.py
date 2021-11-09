@@ -29,14 +29,27 @@ class ServerInfo(object):
 
 
 class UserInfo(object):
-    __slots__ = ('protocol', 'user', 'pid', 'server', 'host', 'auth_info')
+    __slots__ = ('user_id', 'server', 'auth_info')
+
+    @property
+    def protocol(self):
+        return self.user_id.prot
+
+    @property
+    def user(self):
+        return self.user_id.user
+
+    @property
+    def pid(self):
+        return self.user_id.pid
+
+    @property
+    def host(self):
+        return self.user_id.host
 
     def __init__(self, user_id: UserId, server_info: ServerInfo, auth_info: AuthInfo = None):
-        self.protocol = user_id.prot
-        self.user = user_id.user
-        self.pid = user_id.pid
+        self.user_id = user_id
         self.server = server_info
-        self.host = user_id.host
         self.auth_info = auth_info
 
     __repr__ = slot_repr
