@@ -11,9 +11,9 @@ from ...utility import slot_repr
 
 
 class ServerInfo(object):
-    __slots__ = ('protocol', 'user', 'pid', 'sid', 'host', 'program', 'version', 'instance', 'port', 'site')
+    __slots__ = ('protocol', 'user', 'pid', 'sid', 'host', 'program', 'version', 'instance', 'port', 'site', 'stod')
 
-    def __init__(self, user_id: UserId, server_info: SrvInfo):
+    def __init__(self, user_id: UserId, server_info: SrvInfo, stod: int):
         self.protocol = user_id.prot
         self.user = user_id.user
         self.pid = user_id.pid
@@ -24,6 +24,7 @@ class ServerInfo(object):
         self.instance = server_info.inst
         self.port = server_info.port
         self.site = server_info.site
+        self.stod = stod
 
     __repr__ = slot_repr
 
@@ -138,7 +139,7 @@ class MapInfoStore(object):
             pass
         else:
             self._cleaner.add_deletion(self._server_info.pop, deprecated_sid, None)
-        server_info = self._server_info[stod, user_id.sid] = ServerInfo(user_id, server_info)
+        server_info = self._server_info[stod, user_id.sid] = ServerInfo(user_id, server_info, stod)
         return server_info
 
     def get_user(self, stod: int, dictid: int) -> UserInfo:
