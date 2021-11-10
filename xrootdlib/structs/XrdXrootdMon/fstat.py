@@ -76,7 +76,7 @@ class FileDSC(object):
     struct_parser = struct.Struct('!B B h L')
     size = struct_parser.size
 
-    def __init__(self, flags: int, dictid: str):
+    def __init__(self, flags: int, dictid: int):
         self.flags, self.dictid = flags, dictid
 
     @classmethod
