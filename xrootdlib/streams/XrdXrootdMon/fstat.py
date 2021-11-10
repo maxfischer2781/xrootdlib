@@ -25,7 +25,7 @@ class Open(object):
     """A client opened a file"""
     __slots__ = ('client', 'lfn', 'readwrite', 'filesize')
 
-    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, readwrite: bool, filesize: int):
+    def __init__(self, client: PathAccessInfo, lfn: bytes, readwrite: bool, filesize: int):
         self.readwrite, self.filesize, self.client, self.lfn = readwrite, filesize, client, lfn
 
     @classmethod
@@ -44,7 +44,7 @@ class Close(object):
     """A client closed a file"""
     __slots__ = ('client', 'lfn', 'stats')
 
-    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileCLS):
+    def __init__(self, client: PathAccessInfo, lfn: bytes, stats: FileCLS):
         self.client, self.lfn, self.stats = client, lfn, stats
 
     @classmethod
@@ -58,7 +58,7 @@ class Transfer(object):
     """A client transfered a file"""
     __slots__ = ('client', 'lfn', 'stats')
 
-    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileXFR):
+    def __init__(self, client: PathAccessInfo, lfn: bytes, stats: FileXFR):
         self.client, self.lfn, self.stats = client, lfn, stats
 
     @classmethod
