@@ -151,10 +151,14 @@ class MapInfoStore(object):
     def free_user(self, stod: int, dictid: int) -> None:
         self._cleaner.add_deletion(self._user_info.pop, (stod, dictid), None)
 
-    def set_access(self, stod: int, dictid: int, userid: int, path: bytes) -> PathAccessInfo:
-        """Add a file access info based on an FStat Open with LFN"""
-        user_info = self.get_user(stod, userid)
-        item = self._access_info[stod, dictid] = PathAccessInfo(user_info.user_id, user_info.server, path, user_info.auth_info)
+    def set_access(self, server: ServerInfo, dictid: int, userid: int, path: bytes) -> PathAccessInfo:
+        """Add a file access info based on raw references (i.e. FStat Open with LFN)"""
+        if userid > 0:
+            user = self.get_user(server.stod, userid)
+            client, auth = user.client, user.auth_info
+        else:
+            client, auth = None, None
+        item = self._access_info[server.stod, dictid] = PathAccessInfo(client, server, path, auth)
         return item
 
     def get_access(self, stod: int, dictid: int) -> PathAccessInfo:

@@ -29,16 +29,15 @@ class Open(object):
         self.readwrite, self.filesize, self.client, self.lfn = readwrite, filesize, client, lfn
 
     @classmethod
-    def from_record(cls, record_struct: FileOPN, stod: int, map_store: MapInfoStore):
+    def from_record(cls, record_struct: FileOPN, server: ServerInfo, map_store: MapInfoStore):
         read_write = bool(record_struct.flags & recFval.hasRW)
         if record_struct.user is None:
-            # the record does not store the user/lfn – get it from the map stream
-            path_info = map_store.get_access(stod, record_struct.fileid)
-            return cls(path_info, path_info.path, read_write, record_struct.filesize)
+            # the record does not store the user/lfn – get it from the map
+            access_info = map_store.get_access(server.stod, record_struct.fileid)
         else:
-            # the record does provide the user/lfn – put it into the map stream
-            client = map_store.get_user(stod, record_struct.user) if record_struct.user > 0 else None
-            return cls(client, record_struct.lfn, read_write, record_struct.filesize)
+            # the record does provide the user/lfn – put it into the map
+            access_info = map_store.set_access(server, record_struct.fileid, record_struct.user, record_struct.lfn)
+        return cls(access_info, access_info.path, read_write, record_struct.filesize)
 
 
 class Close(object):
