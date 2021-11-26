@@ -104,7 +104,7 @@ def print_fstat(value):
         for idx, record in enumerate(value.records):
             if type(record) == Transfer:
                 continue
-            print(' %4dF' % idx, '{:<10}'.format(type(record).__name__), record.lfn.decode() if hasattr(record, 'lfn') else '')
+            print(' %4dF' % idx, '{:<10}'.format(type(record).__name__), getattr(record, 'lfn', b'').decode())
             print('      ', pretty_user(record.client))
     return value
 
