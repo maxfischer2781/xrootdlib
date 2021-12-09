@@ -1,3 +1,4 @@
+from typing import Union
 import argparse
 import time
 import socket
@@ -6,7 +7,7 @@ import collections
 import chainlet
 
 from xrootdlib.streams.XrdXrootdMon import stream_packets, map_streams, Packet
-from xrootdlib.streams.XrdXrootdMon.map import ServerInfo, UserInfo
+from xrootdlib.streams.XrdXrootdMon.map import ServerInfo, UserInfo, PathAccessInfo
 from xrootdlib.streams.XrdXrootdMon.redir import RedirWindow
 from xrootdlib.streams.XrdXrootdMon.fstat import FstatWindow, Transfer
 from xrootdlib.streams.XrdXrootdMon.trace import TraceWindow
@@ -50,10 +51,13 @@ def site_id(server: ServerInfo):
     )
 
 
-def pretty_user(user: UserInfo):
+def pretty_user(user: Union[UserInfo, PathAccessInfo]):
     """Format a user identifier"""
+    def decode(raw) -> str:
+        return raw.decode() if raw is not None else "<unknown>"
+
     return '{user}@{host}({pid}) [{protocol}]'.format(
-        user=user.user.decode(), host=user.host.decode(), pid=user.pid, protocol=user.protocol.decode()
+        user=decode(user.user), host=decode(user.host), pid=user.pid, protocol=decode(user.protocol)
     )
 
 
@@ -104,7 +108,7 @@ def print_fstat(value):
         for idx, record in enumerate(value.records):
             if type(record) == Transfer:
                 continue
-            print(' %4dF' % idx, '{:<10}'.format(type(record).__name__), record.lfn.decode() if hasattr(record, 'lfn') else '')
+            print(' %4dF' % idx, '{:<10}'.format(type(record).__name__), getattr(record, 'lfn', b'').decode())
             print('      ', pretty_user(record.client))
     return value
 

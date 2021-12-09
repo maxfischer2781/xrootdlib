@@ -15,9 +15,9 @@ class Disconnect(object):
         self.client = client
 
     @classmethod
-    def from_record(cls, record_struct: FileDSC, stod: int, map_store: MapInfoStore):
-        client = map_store.get_user(stod, record_struct.dictid)
-        map_store.free_user(stod, record_struct.dictid)
+    def from_record(cls, record_struct: FileDSC, server: ServerInfo, map_store: MapInfoStore):
+        client = map_store.get_user(server.stod, record_struct.dictid)
+        map_store.free_user(server.stod, record_struct.dictid)
         return cls(client)
 
 
@@ -25,31 +25,32 @@ class Open(object):
     """A client opened a file"""
     __slots__ = ('client', 'lfn', 'readwrite', 'filesize')
 
-    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, readwrite: bool, filesize: int):
+    def __init__(self, client: PathAccessInfo, lfn: bytes, readwrite: bool, filesize: int):
         self.readwrite, self.filesize, self.client, self.lfn = readwrite, filesize, client, lfn
 
     @classmethod
-    def from_record(cls, record_struct: FileOPN, stod: int, map_store: MapInfoStore):
+    def from_record(cls, record_struct: FileOPN, server: ServerInfo, map_store: MapInfoStore):
         read_write = bool(record_struct.flags & recFval.hasRW)
-        if record_struct.user is not None:
-            client = map_store.get_user(stod, record_struct.user)
-            return cls(client, record_struct.lfn, read_write, record_struct.filesize)
+        if record_struct.user is None:
+            # the record does not store the user/lfn – get it from the map
+            access_info = map_store.get_access(server.stod, record_struct.fileid)
         else:
-            path_info = map_store.get_path(stod, record_struct.fileid)
-            return cls(path_info, path_info.path, read_write, record_struct.filesize)
+            # the record does provide the user/lfn – put it into the map
+            access_info = map_store.set_access(server, record_struct.fileid, record_struct.user, record_struct.lfn)
+        return cls(access_info, access_info.path, read_write, record_struct.filesize)
 
 
 class Close(object):
     """A client closed a file"""
     __slots__ = ('client', 'lfn', 'stats')
 
-    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileCLS):
+    def __init__(self, client: PathAccessInfo, lfn: bytes, stats: FileCLS):
         self.client, self.lfn, self.stats = client, lfn, stats
 
     @classmethod
-    def from_record(cls, record_struct: FileCLS, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.fileid)
-        map_store.free_path(stod, record_struct.fileid)
+    def from_record(cls, record_struct: FileCLS, server: ServerInfo, map_store: MapInfoStore):
+        path_info = map_store.get_access(server.stod, record_struct.fileid)
+        map_store.free_access(server.stod, record_struct.fileid)
         return cls(path_info, path_info.path, record_struct)
 
 
@@ -57,13 +58,13 @@ class Transfer(object):
     """A client transfered a file"""
     __slots__ = ('client', 'lfn', 'stats')
 
-    def __init__(self, client: Union[UserInfo, PathAccessInfo], lfn: bytes, stats: FileXFR):
+    def __init__(self, client: PathAccessInfo, lfn: bytes, stats: FileXFR):
         self.client, self.lfn, self.stats = client, lfn, stats
 
     @classmethod
-    def from_record(cls, record_struct: FileXFR, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.fileid)
-        map_store.free_path(stod, record_struct.fileid)
+    def from_record(cls, record_struct: FileXFR, server: ServerInfo, map_store: MapInfoStore):
+        path_info = map_store.get_access(server.stod, record_struct.fileid)
+        map_store.free_access(server.stod, record_struct.fileid)
         return cls(path_info, path_info.path, record_struct)
 
 
@@ -101,7 +102,7 @@ def digest_packet(stod: int, fstat_struct: FstatStruct, map_store: MapInfoStore)
     for record_struct in fstat_struct.records:
         converter = convert_record_dispatch[type(record_struct)]
         try:
-            record = converter(record_struct, stod, map_store)
+            record = converter(record_struct, server_info, map_store)
         except MapInfoError:
             continue
         records.append(record)

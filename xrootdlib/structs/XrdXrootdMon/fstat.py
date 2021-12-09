@@ -76,7 +76,7 @@ class FileDSC(object):
     struct_parser = struct.Struct('!B B h L')
     size = struct_parser.size
 
-    def __init__(self, flags: int, dictid: str):
+    def __init__(self, flags: int, dictid: int):
         self.flags, self.dictid = flags, dictid
 
     @classmethod
@@ -99,6 +99,12 @@ class FileOPN(object):
     :param filesize: size of the file in bytes
     :param user: client identifier (see :py:class:`~xrootdlib.structs.XrdXrootdMon.Map`)
     :param lfn: the (logical) path of the file
+
+    The ``fileid``, ``user`` and ``lfn`` are closely related and should be interpreted
+    together. If not ``rec_flag & hasLFN`` then ``fileid`` points to user info that
+    contains both ``user`` and ``lfn`` information. Otherwise, the user info should be
+    constructed from ``user`` and ``lfn`` information for the given ``fileid`` as the
+    corresponding :py:class:`~.FileCLS` expects this information.
     """
     __slots__ = ('flags', 'size', 'fileid', 'filesize', 'user', 'lfn')
     struct_parser = struct.Struct('!B B h L q')

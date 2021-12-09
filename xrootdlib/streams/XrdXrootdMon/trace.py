@@ -35,7 +35,7 @@ class Open(object):
 
     @classmethod
     def from_record(cls, record_struct: OpenStruct, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.dictid)
+        path_info = map_store.get_access(stod, record_struct.dictid)
         return cls(path_info, path_info.path, record_struct.filesize)
 
     __repr__ = slot_repr
@@ -50,7 +50,7 @@ class ReadWrite(object):
 
     @classmethod
     def from_record(cls, record_struct: ReadWriteStruct, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.dictid)
+        path_info = map_store.get_access(stod, record_struct.dictid)
         if record_struct.buflen > 0:
             read, write = record_struct.buflen, 0
         else:
@@ -76,8 +76,8 @@ class Close(object):
 
     @classmethod
     def from_record(cls, record_struct: CloseStruct, stod: int, map_store: MapInfoStore):
-        path_info = map_store.get_path(stod, record_struct.dictid)
-        map_store.free_path(stod, record_struct.dictid)
+        path_info = map_store.get_access(stod, record_struct.dictid)
+        map_store.free_access(stod, record_struct.dictid)
         return cls(path_info, path_info.path, record_struct.rtot, record_struct.wtot)
 
     __repr__ = slot_repr
