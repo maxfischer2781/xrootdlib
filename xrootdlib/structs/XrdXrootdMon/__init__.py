@@ -194,7 +194,7 @@ class Fstat(object):
     However, records for one access may be spread over multiple time windows.
     """
     __slots__ = ('tod', 'records')
-    payload_dispath = {
+    payload_dispatch = {
         recType.isDisc: FileDSC,
         recType.isOpen: FileOPN,
         recType.isTime: FileTOD,
@@ -230,7 +230,7 @@ class Fstat(object):
         while record_view:
             redir_type = record_view[0]
             try:
-                payload_type = cls.payload_dispath[redir_type]  # type: FileRecord
+                payload_type = cls.payload_dispatch[redir_type]  # type: FileRecord
             except KeyError:
                 raise ValueError('unknown fstat type %r' % redir_type)
             else:
@@ -255,7 +255,7 @@ class Buff(object):
     with marks at the start, end and between sequences.
     """
     __slots__ = ('records',)
-    payload_dispath = {
+    payload_dispatch = {
         TXROOTD_MON.APPID: AppId,
         TXROOTD_MON.CLOSE: Close,
         TXROOTD_MON.DISC: Disc,
@@ -287,7 +287,7 @@ class Buff(object):
             redir_type = record_view[0] & 0xf0
             try:
                 if redir_type >> 7:  # high order bit is set for all but ReadWrite
-                    payload_type = cls.payload_dispath[redir_type]  # type: Trace
+                    payload_type = cls.payload_dispatch[redir_type]  # type: Trace
                 else:
                     payload_type = ReadWrite
             except KeyError:
@@ -302,7 +302,6 @@ class Buff(object):
 #: Record types in a packet
 PacketRecord = Union[Map, Burr, Fstat, Buff]
 
-
 class Packet(object):
     """
     ``XrdXrootdMon`` packet for a map, r, t or f stream
@@ -311,10 +310,10 @@ class Packet(object):
     :param record: the actual information carried by the packet
     """
     __slots__ = ('header', 'record')
-    record_dispath = {key: Map for key in Map._payload_dispatch.keys()}  # type: Dict[bytes, PacketRecord]
-    record_dispath[b'r'] = Burr
-    record_dispath[b't'] = Buff
-    record_dispath[b'f'] = Fstat
+    record_dispatch = {key: Map for key in Map._payload_dispatch.keys()}  # type: Dict[bytes, PacketRecord]
+    record_dispatch[b'r'] = Burr
+    record_dispatch[b't'] = Buff
+    record_dispatch[b'f'] = Fstat
 
     @property
     def size(self):
@@ -337,7 +336,7 @@ class Packet(object):
         """
         header = Header.from_buffer(buffer)
         try:
-            record_type = cls.record_dispath[header.code]  # type: PacketRecord
+            record_type = cls.record_dispatch[header.code]  # type: PacketRecord
         except KeyError:
             raise ValueError('unknown record code %r' % header.code)
         else:
