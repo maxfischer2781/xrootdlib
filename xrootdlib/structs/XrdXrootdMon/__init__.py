@@ -12,12 +12,15 @@ to read an entire packet at a time.
 .. _XRootD Monitoring: http://xrootd.org/doc/dev44/xrd_monitoring.htm
 """
 import struct
+import io
 from typing import List, Union, Dict
 
 from .map import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, MapPayload
 from .redir import XROOTD_MON as RXROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
 from .fstat import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
 from .trace import XROOTD_MON as TXROOTD_MON, AppId, Close, Disc, Open, ReadWrite, ReadU, ReadV, Window, Trace
+from .plugin import ProxyCache, ContextCache, TCPConnectionMonitor, pluginType, PluginRecord
+from .constants import XROOTD_MON_PIDMASK, XROOTD_MON_PIDSHFT
 
 
 class Header(object):
@@ -302,6 +305,60 @@ class Buff(object):
 #: Record types in a packet
 PacketRecord = Union[Map, Burr, Fstat, Buff]
 
+
+class Plugin(object):
+    """
+    ``XrdXrootdMonGS`` ("g-stream") describing information from plug-ins such
+    as Cache Context Manager, Proxy File Cache or TCP connection monitor 
+
+    :param tod: identifier for the server and time window
+    :param records: file operations and statistics
+
+    """
+    __slots__ = ('tBeg', 'tEnd', 'records')
+    payload_dispatch = {
+        pluginType.isCCM: ContextCache,
+        pluginType.isPFC: ProxyCache,
+        pluginType.isTCM: TCPConnectionMonitor
+    }
+
+    def __init__(self, tBeg: int, tEnd: int, records: List[PluginRecord]):
+        self.tBeg = tBeg
+        self.tEnd = tEnd
+        self.records = records
+
+    @classmethod
+    def from_record(cls, record_data: bytes, record_code: bytes = b'g') -> 'Plugin':
+        """
+        Extract the record from the record portion of a stream packet buffer
+
+        :param record_data: buffer at the start of the record of a monitor stream packet
+        :param record_code: the :py:attr:`~.Header.code` field for this packet
+
+        :note: The only valid record code for this class is ``b'g'``.
+        """
+        if record_code != b'g':
+            raise ValueError('unknown record code %r (expected %r)' % (record_code, b'g'))
+        records = []
+
+        record_view = memoryview(record_data)
+        header_format = struct.Struct('!llq')
+        tBeg, tEnd, provider_id = header_format.unpack_from(record_view)
+        redir_type = chr((provider_id >> XROOTD_MON_PIDSHFT) & XROOTD_MON_PIDMASK)
+        text_stream = io.TextIOWrapper(io.BytesIO(record_view[header_format.size: -1])) # Strip null byte at end
+
+        try:
+            payload_type = cls.payload_dispatch[redir_type]  # type: PluginRecord
+        except KeyError:
+            raise ValueError('unknown plugin type %r' % redir_type)
+        else:
+            for line in text_stream:
+                record = payload_type.from_string(line)
+                records.append(record)
+
+        return cls(tBeg, tEnd, records)
+
+
 class Packet(object):
     """
     ``XrdXrootdMon`` packet for a map, r, t or f stream
@@ -314,6 +371,7 @@ class Packet(object):
     record_dispatch[b'r'] = Burr
     record_dispatch[b't'] = Buff
     record_dispatch[b'f'] = Fstat
+    record_dispatch[b'g'] = Plugin
 
     @property
     def size(self):
