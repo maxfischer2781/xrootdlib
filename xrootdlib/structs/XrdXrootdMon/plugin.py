@@ -1,8 +1,8 @@
 import json
 import enum
-from io import TextIOWrapper
+from typing import Union
+
 from ...utility import slot_repr
-from typing import Optional, Union
 
 
 class pluginType(str, enum.Enum):
