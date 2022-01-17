@@ -361,7 +361,7 @@ class Plugin(object):
 
 class Packet(object):
     """
-    ``XrdXrootdMon`` packet for a map, r, t or f stream
+    ``XrdXrootdMon`` packet for a map, r, t, f or g stream
 
     :param header: the header specifying type, ordering and size of the packet
     :param record: the actual information carried by the packet
