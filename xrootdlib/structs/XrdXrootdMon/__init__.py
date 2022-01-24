@@ -12,7 +12,6 @@ to read an entire packet at a time.
 .. _XRootD Monitoring: http://xrootd.org/doc/dev44/xrd_monitoring.htm
 """
 import struct
-import io
 from typing import List, Union, Dict
 
 from .map import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, MapPayload
@@ -311,7 +310,8 @@ class Plugin(object):
     ``XrdXrootdMonGS`` ("g-stream") describing information from plug-ins such
     as Cache Context Manager, Proxy File Cache or TCP connection monitor 
 
-    :param tod: identifier for the server and time window
+    :param tBeg: UNIX time of the first entry
+    :param tEnd: UNIX time of the last entry
     :param records: file operations and statistics
 
     """
@@ -328,7 +328,7 @@ class Plugin(object):
         self.records = records
 
     @classmethod
-    def from_record(cls, record_data: bytes, record_code: bytes = b'g') -> 'Plugin':
+    def from_record(cls, record_data: Union[bytes, memoryview], record_code: bytes = b'g') -> 'Plugin':
         """
         Extract the record from the record portion of a stream packet buffer
 
@@ -339,20 +339,19 @@ class Plugin(object):
         """
         if record_code != b'g':
             raise ValueError('unknown record code %r (expected %r)' % (record_code, b'g'))
-        records = []
 
-        record_view = memoryview(record_data)
         header_format = struct.Struct('!llq')
-        tBeg, tEnd, provider_id = header_format.unpack_from(record_view)
-        redir_type = chr((provider_id >> XROOTD_MON_PIDSHFT) & XROOTD_MON_PIDMASK)
-        text_stream = io.TextIOWrapper(io.BytesIO(record_view[header_format.size: -1])) # Strip null byte at end
+        tBeg, tEnd, provider_id = header_format.unpack_from(record_data)
+        redir_type = bytes([(provider_id >> XROOTD_MON_PIDSHFT) & XROOTD_MON_PIDMASK])
+        payloads = bytes(record_data[header_format.size: -1]).decode('ascii')  # Strip null byte at end
 
         try:
             payload_type = cls.payload_dispatch[redir_type]  # type: PluginRecord
         except KeyError:
+            print(cls.payload_dispatch)
             raise ValueError('unknown plugin type %r' % redir_type)
         else:
-            records = [payload_type.from_string(line) for line in text_stream]
+            records = [payload_type.from_string(line) for line in payloads.splitlines()]
         return cls(tBeg, tEnd, records)
 
 
