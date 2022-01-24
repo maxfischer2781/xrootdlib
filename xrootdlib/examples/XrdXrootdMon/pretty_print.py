@@ -6,7 +6,8 @@ import collections
 
 import chainlet
 
-from xrootdlib.streams.XrdXrootdMon import stream_packets, map_streams, Packet
+from xrootdlib.streams.XrdXrootdMon import stream_packets, map_streams, Packet, PluginStruct
+from xrootdlib.structs.XrdXrootdMon.plugin import ProxyCache
 from xrootdlib.streams.XrdXrootdMon.map import ServerInfo, UserInfo, PathAccessInfo
 from xrootdlib.streams.XrdXrootdMon.redir import RedirWindow
 from xrootdlib.streams.XrdXrootdMon.fstat import FstatWindow, Transfer
@@ -75,7 +76,8 @@ def print_packet(initial=1):
         b'x': 'XfrInfo',
         b'r': 'Burr',
         b't': 'Buff',
-        b'f': 'Fstat'
+        b'f': 'Fstat',
+        b'g': 'Plugin',
     }
     value = yield
     assert isinstance(value, Packet)
@@ -146,6 +148,19 @@ def print_server(value):
         print('Server', site_id(value))
     return value
 
+@chainlet.funclet
+def print_cache(value):
+    """
+    Print some of the information from packets sent by cache plugin.
+    Other plugins are not yet supported.
+    """
+    if isinstance(value, PluginStruct):
+        if type(value.records[0]) == ProxyCache:
+            for idx, record in enumerate(value.records):
+                print(' %4dF' % idx, '{:<10}'.format(type(record).__name__), getattr(record, 'lfn', b''))
+                print(' Access count: {:}'.format(record.access_cnt))
+    return value
+
 
 PRINT_MAP = {
     'packet': print_packet,
@@ -154,6 +169,7 @@ PRINT_MAP = {
     'fstats': print_fstat_sum,
     'traces': print_trace_sum,
     'server': print_server,
+    'plugin': print_cache
 }
 
 

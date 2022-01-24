@@ -18,6 +18,8 @@ from .map import SrvInfo, Path, AppInfo, PrgInfo, AuthInfo, XfrInfo, UserId, Map
 from .redir import XROOTD_MON as RXROOTD_MON, Redirect, WindowMark, ServerIdent, Redir
 from .fstat import FileTOD, FileDSC, FileOPN, FileCLS, FileRecord, FileXFR, recType
 from .trace import XROOTD_MON as TXROOTD_MON, AppId, Close, Disc, Open, ReadWrite, ReadU, ReadV, Window, Trace
+from .plugin import ProxyCache, ContextCache, TCPConnectionMonitor, pluginType, PluginRecord
+from .constants import XROOTD_MON_PIDMASK, XROOTD_MON_PIDSHFT
 
 
 class Header(object):
@@ -194,7 +196,7 @@ class Fstat(object):
     However, records for one access may be spread over multiple time windows.
     """
     __slots__ = ('tod', 'records')
-    payload_dispath = {
+    payload_dispatch = {
         recType.isDisc: FileDSC,
         recType.isOpen: FileOPN,
         recType.isTime: FileTOD,
@@ -230,7 +232,7 @@ class Fstat(object):
         while record_view:
             redir_type = record_view[0]
             try:
-                payload_type = cls.payload_dispath[redir_type]  # type: FileRecord
+                payload_type = cls.payload_dispatch[redir_type]  # type: FileRecord
             except KeyError:
                 raise ValueError('unknown fstat type %r' % redir_type)
             else:
@@ -255,7 +257,7 @@ class Buff(object):
     with marks at the start, end and between sequences.
     """
     __slots__ = ('records',)
-    payload_dispath = {
+    payload_dispatch = {
         TXROOTD_MON.APPID: AppId,
         TXROOTD_MON.CLOSE: Close,
         TXROOTD_MON.DISC: Disc,
@@ -287,7 +289,7 @@ class Buff(object):
             redir_type = record_view[0] & 0xf0
             try:
                 if redir_type >> 7:  # high order bit is set for all but ReadWrite
-                    payload_type = cls.payload_dispath[redir_type]  # type: Trace
+                    payload_type = cls.payload_dispatch[redir_type]  # type: Trace
                 else:
                     payload_type = ReadWrite
             except KeyError:
@@ -303,18 +305,69 @@ class Buff(object):
 PacketRecord = Union[Map, Burr, Fstat, Buff]
 
 
+class Plugin(object):
+    """
+    ``XrdXrootdMonGS`` ("g-stream") describing information from plug-ins such
+    as Cache Context Manager, Proxy File Cache or TCP connection monitor 
+
+    :param tBeg: UNIX time of the first entry
+    :param tEnd: UNIX time of the last entry
+    :param records: file operations and statistics
+
+    """
+    __slots__ = ('tBeg', 'tEnd', 'records')
+    payload_dispatch = {
+        pluginType.isCCM: ContextCache,
+        pluginType.isPFC: ProxyCache,
+        pluginType.isTCM: TCPConnectionMonitor
+    }
+
+    def __init__(self, tBeg: int, tEnd: int, records: List[PluginRecord]):
+        self.tBeg = tBeg
+        self.tEnd = tEnd
+        self.records = records
+
+    @classmethod
+    def from_record(cls, record_data: Union[bytes, memoryview], record_code: bytes = b'g') -> 'Plugin':
+        """
+        Extract the record from the record portion of a stream packet buffer
+
+        :param record_data: buffer at the start of the record of a monitor stream packet
+        :param record_code: the :py:attr:`~.Header.code` field for this packet
+
+        :note: The only valid record code for this class is ``b'g'``.
+        """
+        if record_code != b'g':
+            raise ValueError('unknown record code %r (expected %r)' % (record_code, b'g'))
+
+        header_format = struct.Struct('!llq')
+        tBeg, tEnd, provider_id = header_format.unpack_from(record_data)
+        redir_type = bytes([(provider_id >> XROOTD_MON_PIDSHFT) & XROOTD_MON_PIDMASK])
+        payloads = bytes(record_data[header_format.size: -1]).decode('ascii')  # Strip null byte at end
+
+        try:
+            payload_type = cls.payload_dispatch[redir_type]  # type: PluginRecord
+        except KeyError:
+            print(cls.payload_dispatch)
+            raise ValueError('unknown plugin type %r' % redir_type)
+        else:
+            records = [payload_type.from_string(line) for line in payloads.splitlines()]
+        return cls(tBeg, tEnd, records)
+
+
 class Packet(object):
     """
-    ``XrdXrootdMon`` packet for a map, r, t or f stream
+    ``XrdXrootdMon`` packet for a map, r, t, f or g stream
 
     :param header: the header specifying type, ordering and size of the packet
     :param record: the actual information carried by the packet
     """
     __slots__ = ('header', 'record')
-    record_dispath = {key: Map for key in Map._payload_dispatch.keys()}  # type: Dict[bytes, PacketRecord]
-    record_dispath[b'r'] = Burr
-    record_dispath[b't'] = Buff
-    record_dispath[b'f'] = Fstat
+    record_dispatch = {key: Map for key in Map._payload_dispatch.keys()}  # type: Dict[bytes, PacketRecord]
+    record_dispatch[b'r'] = Burr
+    record_dispatch[b't'] = Buff
+    record_dispatch[b'f'] = Fstat
+    record_dispatch[b'g'] = Plugin
 
     @property
     def size(self):
@@ -337,7 +390,7 @@ class Packet(object):
         """
         header = Header.from_buffer(buffer)
         try:
-            record_type = cls.record_dispath[header.code]  # type: PacketRecord
+            record_type = cls.record_dispatch[header.code]  # type: PacketRecord
         except KeyError:
             raise ValueError('unknown record code %r' % header.code)
         else:

@@ -14,7 +14,8 @@ from typing import List, Tuple, IO
 import chainlet
 
 from ...structs.XrdXrootdMon import Packet,\
-    Header as HeaderStruct, Map as MapStruct, Fstat as FstatStruct, Buff as BuffStruct, Burr as BurrStruct
+    Header as HeaderStruct, Map as MapStruct, Fstat as FstatStruct, Buff as BuffStruct, Burr as BurrStruct,\
+    Plugin as PluginStruct
 
 from .utility import packet_from_buffer, PSeq, PacketBufferExhausted
 from .map import MapInfoStore
@@ -23,7 +24,6 @@ from .trace import digest_packet as digest_trace_packet
 from .redir import digest_packet as digest_redir_packet
 
 __all__ = ['stream_packets', 'map_streams']
-
 
 @chainlet.genlet(prime=False)
 def stream_packets(packet_source: IO[bytes], sort_window: int=8):
@@ -90,6 +90,7 @@ class StreamMapper(chainlet.ChainLink):
             FstatStruct: self._process_fstat,
             BuffStruct: self._process_trace,
             BurrStruct: self._process_redir,
+            PluginStruct: self._process_plugin,
         }
 
     def chainlet_send(self, value: Packet=None):
@@ -107,6 +108,9 @@ class StreamMapper(chainlet.ChainLink):
 
     def _process_redir(self, header: HeaderStruct, map_struct: BurrStruct):
         yield from digest_redir_packet(header.stod, map_struct, self.map_store)
+
+    def _process_plugin(self, header: HeaderStruct, plug_struct: PluginStruct):
+        yield plug_struct
 
     def __repr__(self):
         return 'map_streams()'
