@@ -90,7 +90,7 @@ class StreamMapper(chainlet.ChainLink):
             FstatStruct: self._process_fstat,
             BuffStruct: self._process_trace,
             BurrStruct: self._process_redir,
-            PluginStruct: self._process_plugin
+            PluginStruct: self._process_plugin,
         }
 
     def chainlet_send(self, value: Packet=None):

@@ -352,10 +352,7 @@ class Plugin(object):
         except KeyError:
             raise ValueError('unknown plugin type %r' % redir_type)
         else:
-            for line in text_stream:
-                record = payload_type.from_string(line)
-                records.append(record)
-
+            records = [payload_type.from_string(line) for line in text_stream]
         return cls(tBeg, tEnd, records)
 
 

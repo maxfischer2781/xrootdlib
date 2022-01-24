@@ -77,7 +77,7 @@ def print_packet(initial=1):
         b'r': 'Burr',
         b't': 'Buff',
         b'f': 'Fstat',
-        b'g': 'Plugin'
+        b'g': 'Plugin',
     }
     value = yield
     assert isinstance(value, Packet)
