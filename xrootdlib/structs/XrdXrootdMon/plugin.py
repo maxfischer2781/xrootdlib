@@ -1,5 +1,6 @@
 import json
 import enum
+import warnings
 from typing import Union
 
 from ...utility import slot_repr
@@ -38,6 +39,12 @@ class ProxyCache(object):
             self, event, lfn, size, blk_size, n_blks, n_blks_done, access_cnt, 
             attach_t, detach_t, remotes, b_hit, b_miss, b_bypass, n_cks_errs = 0, **kwargs
         ):
+
+        if kwargs:
+            warnings.warn(
+                f"{self.__class__.__name__} ignored {kwargs}.",
+                category=RuntimeWarning
+            )
 
         self.event, self.lfn, self.size, self.blk_size, self.n_blks,  = event, lfn, size, blk_size, n_blks
         self.n_blks_done, self.access_cnt, self.attach_t,  = n_blks_done, access_cnt, attach_t
